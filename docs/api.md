@@ -561,6 +561,48 @@ POST /jwglxt/cjcx/cjcx_dcListByXs.html?gnmkdm=N305005
 
 实测 `cjcx_dyList` 返回“无功能权限”页面，`cjcx_dcListByXs` 返回系统异常页面；当前学生角色下不能把它们作为可用的打印/导出接口。HTTP 状态均为 200，因此必须检查响应内容。
 
+### 5.6 成绩详情（弹层，实测 2026-09）
+
+```
+POST /jwglxt/cjcx/cjcx_cxCjxqGjh.html?gnmkdm=N305005
+Referer: https://jwxt2018.gxu.edu.cn/jwglxt/cjcx/cjcx_cxDgXscj.html?gnmkdm=N305005
+参数(form): jxb_id=<教学班ID>&xnm=<学年>&xqm=<学期>&xh_id=<学号ID>&kcmc=<课程名>
+```
+
+> **`gnmkdm=N305005` 是必需参数**。页面 JS 的 `$.getURL` 会自动追加它；手工请求漏掉时，
+> POST 返回 HTTP 500、GET 被重定向到登录页（HTTP 200 但内容是登录页）。参数取自成绩列表
+> 条目的 `jxb_id` / `xnm` / `xqm` / `xh_id` / `kcmc`。GET + query 参数同样可用。
+
+返回 **HTML 弹层**（非 JSON），结构固定：
+
+```html
+<span class="red2" role="button">大学生心理健康教育</span>   <!-- 课程名回显 -->
+<table id="subtab">
+  <thead><tr><td>成绩分项</td><td>成绩分项比例</td><td>成绩</td></tr></thead>
+  <tbody>
+    <tr><td>【 平时成绩 】</td><td>40%</td><td>94</td></tr>
+    <tr><td>【 期末成绩 】</td><td>60%</td><td>89</td></tr>
+    <tr><td>【 总评 】</td><td></td><td>91</td></tr>
+  </tbody>
+</table>
+<span class="bigger-120">本课程期末强制达标线为 分</span>
+```
+
+实测 50 条成绩中只有两种形态：
+
+| 形态 | tbody 行 | 说明 |
+|---|---|---|
+| 有分项拆分 | 平时成绩 / 期末成绩 / 总评 | 三条，比例为百分数（如 `40%`/`60%`） |
+| 无分项拆分 | 总评成绩(100%) / 总评 | 两条，只有总评 |
+
+解析注意点：
+
+- `总评成绩` 与 `总评` 是**两回事**：前者是 100% 权重的分项，实测可能与列表成绩存在小数差
+  （如列表 `cj=93`，`总评成绩=93.1`，`总评=93`）。应优先采用 `【 总评 】` 行。
+- 总评行的比例单元格为 `&nbsp;`，需按空值处理。
+- 底部“本课程期末强制达标线为 N 分”在未设置时数字为空，只有文字。
+- 会话过期时该端点返回登录页，需按登录页特征识别（不能只看 HTTP 200）。
+
 ---
 
 ## 6. 考试相关
