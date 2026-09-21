@@ -175,8 +175,10 @@ class GradeQueryActivity : BaseActivity() {
                 refreshSemesterOptions()
                 renderGrades()
             }.onFailure { error ->
-                // CaptchaRequiredException 等已带友好文案，直接展示
-                showStatus(error.message ?: "查询失败", loading = false)
+                // 失败原因走浮层提示（CaptchaRequiredException 等已带友好文案）；
+                // 同时把页面还原成「已有数据 / 空态」，不再把错误嵌在列表区域里
+                AppToast.error(this@GradeQueryActivity, error.message ?: "查询失败")
+                renderGrades()
             }
         }
     }
