@@ -13,6 +13,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import com.cherry.wakeupschedule.service.CourseDataManager
 import com.cherry.wakeupschedule.service.ThemeModeManager
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import com.cherry.wakeupschedule.widget.MinimalWidgetProvider
 import com.cherry.wakeupschedule.widget.ScheduleWidgetProvider
 import com.cherry.wakeupschedule.widget.ScheduleWidgetUpdateService
@@ -51,6 +52,8 @@ class App : Application() {
     private val activityTracker = object : Application.ActivityLifecycleCallbacks {
         override fun onActivityResumed(activity: Activity) {
             currentActivityRef = WeakReference(activity)
+            // 应用内提示卡挂在当前页面里（而非系统 Toast 窗口），随页面一起进退场
+            AppToast.onActivityResumed(activity)
         }
 
         override fun onActivityPaused(activity: Activity) {
@@ -62,7 +65,11 @@ class App : Application() {
         override fun onActivityStarted(activity: Activity) = Unit
         override fun onActivityStopped(activity: Activity) = Unit
         override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
-        override fun onActivityDestroyed(activity: Activity) = Unit
+
+        override fun onActivityDestroyed(activity: Activity) {
+            // 摘掉提示容器但保留队列，等下一个页面 resume 时接管
+            AppToast.onActivityDestroyed(activity)
+        }
     }
 
     override fun onCreate() {

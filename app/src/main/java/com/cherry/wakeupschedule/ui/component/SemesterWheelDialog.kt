@@ -12,7 +12,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import androidx.core.graphics.ColorUtils
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -286,11 +286,12 @@ class SemesterWheelDialog(
                 courseCounts = CourseDataManager.getInstance(ctx).getSemesterCourseCounts()
                 adapter.notifyDataSetChanged()
                 onSemesterSwitched?.invoke(index)
-                Toast.makeText(ctx, "已导入 $count 门课程", Toast.LENGTH_SHORT).show()
+                // 先关掉滚轮弹窗再提示，避免提示卡落在弹窗遮罩之下
                 dismiss()
+                AppToast.success(ctx, "已导入 $count 门课程")
             }.onFailure { e ->
                 adapter.notifyDataSetChanged()
-                Toast.makeText(ctx, "获取课表失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                AppToast.error(ctx, "获取课表失败: ${e.message}")
             }
         }
     }

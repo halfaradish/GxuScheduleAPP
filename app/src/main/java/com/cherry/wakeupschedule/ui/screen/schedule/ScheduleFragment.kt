@@ -12,7 +12,7 @@ import android.view.animation.OvershootInterpolator
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -360,8 +360,7 @@ class ScheduleFragment : Fragment() {
                 }.onFailure { e ->
                     setScheduleLoading(false)
                     if (showError) {
-                        Toast.makeText(requireContext(),
-                            "刷新失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                        AppToast.error(requireContext(), "刷新失败: ${e.message}")
                     }
                 }
             }
@@ -601,7 +600,7 @@ class ScheduleFragment : Fragment() {
                                     showLoadSuccess(count)
                                 }.onFailure { e ->
                                     setScheduleLoading(false)
-                                    Toast.makeText(ctx, "获取课表失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    AppToast.error(ctx, "获取课表失败: ${e.message}")
                                 }
                             }
                         }

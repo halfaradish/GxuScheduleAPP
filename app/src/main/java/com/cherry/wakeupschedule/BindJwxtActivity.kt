@@ -6,7 +6,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
@@ -196,7 +196,11 @@ class BindJwxtActivity : BaseActivity() {
                 scheduleImported -> "绑定成功！"
                 else -> "绑定成功，但课表导入失败，可在课表页刷新"
             }
-            Toast.makeText(this@BindJwxtActivity, message, Toast.LENGTH_SHORT).show()
+            if (isPasswordUpdateMode || scheduleImported) {
+                AppToast.success(this@BindJwxtActivity, message)
+            } else {
+                AppToast.warn(this@BindJwxtActivity, message)
+            }
             finish()
         }.onFailure { e ->
             // 回到表单让用户修改重试，错误原因带步骤上下文

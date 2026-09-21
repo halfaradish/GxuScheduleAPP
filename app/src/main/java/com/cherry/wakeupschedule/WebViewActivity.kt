@@ -18,7 +18,7 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.ProgressBar
-import android.widget.Toast
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import androidx.core.view.WindowCompat
 import com.cherry.wakeupschedule.databinding.ActivityWebviewBinding
 import com.cherry.wakeupschedule.model.Course
@@ -143,22 +143,14 @@ class WebViewActivity : BaseActivity() {
                     }
 
                     if (sourceUri == null) {
-                        Toast.makeText(
-                            this@WebViewActivity,
-                            "下载失败：无法获取文件路径",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        AppToast.error(this@WebViewActivity, "下载失败：无法获取文件路径")
                         return
                     }
 
                     // 验证文件大小，确保文件不为空
                     val filePath = sourceUri.path
                     if (filePath != null && java.io.File(filePath).length() == 0L) {
-                        Toast.makeText(
-                            this@WebViewActivity,
-                            "下载的文件为空",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        AppToast.error(this@WebViewActivity, "下载的文件为空")
                         return
                     }
 
@@ -168,17 +160,14 @@ class WebViewActivity : BaseActivity() {
                             val success = importService.importFromFile(sourceUri!!)
                             withContext(Dispatchers.Main) {
                                 if (success) {
-                                    Toast.makeText(
+                                    AppToast.success(
                                         this@WebViewActivity,
                                         "课程表已下载并导入成功 ✓",
-                                        Toast.LENGTH_LONG
-                                    ).show()
+                                        AppToast.Duration.LONG,
+                                        groupKey = "import_success"
+                                    )
                                 } else {
-                                    Toast.makeText(
-                                        this@WebViewActivity,
-                                        "导入失败，请检查文件格式",
-                                        Toast.LENGTH_LONG
-                                    ).show()
+                                    AppToast.error(this@WebViewActivity, "导入失败，请检查文件格式")
                                 }
                                 finish()
                             }
@@ -188,11 +177,11 @@ class WebViewActivity : BaseActivity() {
                                 // 导入失败时保存到 pending_imports 作为兜底
                                 val prefs = getSharedPreferences("pending_imports", Context.MODE_PRIVATE)
                                 prefs.edit().putString("pending_file", sourceUri.toString()).apply()
-                                Toast.makeText(
+                                AppToast.info(
                                     this@WebViewActivity,
                                     "下载完成，返回首页自动导入",
-                                    Toast.LENGTH_LONG
-                                ).show()
+                                    AppToast.Duration.LONG
+                                )
                                 finish()
                             }
                         }
@@ -202,11 +191,11 @@ class WebViewActivity : BaseActivity() {
                     // 下载失败
                     val errorColumnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_REASON)
                     val errorReason = if (errorColumnIndex != -1) cursor.getInt(errorColumnIndex) else -1
-                    Toast.makeText(
+                    AppToast.error(
                         this@WebViewActivity,
                         "下载失败，错误码: $errorReason",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                        groupKey = "download_failed"
+                    )
                 }
             }
             cursor.close()
@@ -339,7 +328,7 @@ class WebViewActivity : BaseActivity() {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                         startActivity(intent)
                     } catch (e: Exception) {
-                        Toast.makeText(this@WebViewActivity, "无法打开下载页面", Toast.LENGTH_SHORT).show()
+                        AppToast.error(this@WebViewActivity, "无法打开下载页面")
                     }
                     return@setDownloadListener
                 }
@@ -392,7 +381,7 @@ class WebViewActivity : BaseActivity() {
     }
     
     private fun downloadWithSystemManager(url: String, contentDisposition: String?, mimeType: String?) {
-        Toast.makeText(this@WebViewActivity, "正在下载课程表...", Toast.LENGTH_SHORT).show()
+        AppToast.info(this@WebViewActivity, "正在下载课程表...", groupKey = "webview_download_start")
         
         try {
             // 检查DownloadManager是否可用
@@ -404,7 +393,7 @@ class WebViewActivity : BaseActivity() {
                 connectivityManager.getNetworkCapabilities(currentNetwork)
             } else null
             if (networkCapabilities == null || !networkCapabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
-                Toast.makeText(this, "请检查网络连接", Toast.LENGTH_LONG).show()
+                AppToast.warn(this, "请检查网络连接")
                 return
             }
             Log.d("WebViewActivity", "网络已连接")
@@ -487,12 +476,12 @@ class WebViewActivity : BaseActivity() {
                 startDownloadStatusCheck(currentDownloadId)
             } else {
                 Log.e("WebViewActivity", "DownloadManager返回无效ID: $currentDownloadId")
-                Toast.makeText(this, "下载启动失败，DownloadManager不可用", Toast.LENGTH_LONG).show()
+                AppToast.error(this, "下载启动失败，DownloadManager不可用")
             }
             
         } catch (e: Exception) {
             Log.e("WebViewActivity", "启动下载失败", e)
-            Toast.makeText(this, "下载启动失败: ${e.message}", Toast.LENGTH_LONG).show()
+            AppToast.error(this, "下载启动失败: ${e.message}")
         }
     }
     
@@ -543,7 +532,11 @@ class WebViewActivity : BaseActivity() {
                             val reason = if (reasonIndex != -1) cursor.getInt(reasonIndex) else -1
                             Log.e("WebViewActivity", "下载失败，原因码: $reason")
                             cursor.close()
-                            Toast.makeText(this@WebViewActivity, "下载失败，错误码: $reason", Toast.LENGTH_SHORT).show()
+                            AppToast.error(
+                                this@WebViewActivity,
+                                "下载失败，错误码: $reason",
+                                groupKey = "download_failed"
+                            )
                             return
                         }
                         else -> {
@@ -556,7 +549,7 @@ class WebViewActivity : BaseActivity() {
                                 cursor.close()
                                 // 超时后尝试取消下载
                                 downloadManager.remove(downloadId)
-                                Toast.makeText(this@WebViewActivity, "下载超时，请检查网络连接", Toast.LENGTH_LONG).show()
+                                AppToast.warn(this@WebViewActivity, "下载超时，请检查网络连接")
                             }
                         }
                     }
@@ -571,7 +564,7 @@ class WebViewActivity : BaseActivity() {
     }
     
     private fun downloadWithOkHttp(url: String, contentDisposition: String?, mimeType: String?, userAgent: String, refererUrl: String?) {
-        Toast.makeText(this@WebViewActivity, "正在下载课程表...", Toast.LENGTH_SHORT).show()
+        AppToast.info(this@WebViewActivity, "正在下载课程表...", groupKey = "webview_download_start")
         
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -638,7 +631,11 @@ class WebViewActivity : BaseActivity() {
                 
                 if (!response.isSuccessful) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@WebViewActivity, "下载失败: HTTP ${response.code}", Toast.LENGTH_SHORT).show()
+                        AppToast.error(
+                            this@WebViewActivity,
+                            "下载失败: HTTP ${response.code}",
+                            groupKey = "download_failed"
+                        )
                     }
                     return@launch
                 }
@@ -664,7 +661,7 @@ class WebViewActivity : BaseActivity() {
                 // 验证文件
                 if (destFile.length() == 0L) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@WebViewActivity, "下载的文件为空", Toast.LENGTH_SHORT).show()
+                        AppToast.error(this@WebViewActivity, "下载的文件为空")
                     }
                     destFile.delete()
                     return@launch
@@ -681,16 +678,25 @@ class WebViewActivity : BaseActivity() {
                         val importService = ImportService(this@WebViewActivity)
                         val success = importService.importFromFile(fileUri)
                         if (success) {
-                            Toast.makeText(this@WebViewActivity, "课程表已下载并导入成功 ✓", Toast.LENGTH_LONG).show()
+                            AppToast.success(
+                                this@WebViewActivity,
+                                "课程表已下载并导入成功 ✓",
+                                AppToast.Duration.LONG,
+                                groupKey = "import_success"
+                            )
                         } else {
-                            Toast.makeText(this@WebViewActivity, "导入失败，请检查文件格式", Toast.LENGTH_LONG).show()
+                            AppToast.error(this@WebViewActivity, "导入失败，请检查文件格式")
                         }
                     } catch (e: Exception) {
                         Log.e("WebViewActivity", "导入下载文件失败", e)
                         // 导入失败时保存到 pending_imports 作为兜底
                         val prefs = getSharedPreferences("pending_imports", Context.MODE_PRIVATE)
                         prefs.edit().putString("pending_file", destFile.absolutePath).apply()
-                        Toast.makeText(this@WebViewActivity, "下载完成，返回首页自动导入", Toast.LENGTH_LONG).show()
+                        AppToast.info(
+                            this@WebViewActivity,
+                            "下载完成，返回首页自动导入",
+                            AppToast.Duration.LONG
+                        )
                     }
                     finish()
                 }
@@ -698,7 +704,11 @@ class WebViewActivity : BaseActivity() {
             } catch (e: Exception) {
                 Log.e("WebViewActivity", "OkHttp下载失败", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@WebViewActivity, "下载失败: ${e.message}", Toast.LENGTH_LONG).show()
+                    AppToast.error(
+                        this@WebViewActivity,
+                        "下载失败: ${e.message}",
+                        groupKey = "download_failed"
+                    )
                 }
             }
         }
@@ -951,16 +961,21 @@ class WebViewActivity : BaseActivity() {
                         // 替换当前学期课程
                         courseDataManager.replaceAllCourses(courses)
 
-                        Toast.makeText(this@WebViewActivity, "成功导入 ${courses.size} 门课程", Toast.LENGTH_LONG).show()
+                        AppToast.success(
+                            this@WebViewActivity,
+                            "成功导入 ${courses.size} 门课程",
+                            AppToast.Duration.LONG,
+                            groupKey = "import_success"
+                        )
 
                         // 退出WebView并返回主界面
                         finish()
                     } else {
-                        Toast.makeText(this@WebViewActivity, "未找到有效课程数据", Toast.LENGTH_LONG).show()
+                        AppToast.error(this@WebViewActivity, "未找到有效课程数据")
                     }
                 } catch (e: Exception) {
                     Log.e("WebViewActivity", "解析课程数据失败", e)
-                    Toast.makeText(this@WebViewActivity, "解析课程表失败: ${e.message}", Toast.LENGTH_LONG).show()
+                    AppToast.error(this@WebViewActivity, "解析课程表失败: ${e.message}")
                 }
             }
         }
@@ -1010,7 +1025,7 @@ class WebViewActivity : BaseActivity() {
             Log.w("WebViewActivity", "未找到课程表数据")
 
             CoroutineScope(Dispatchers.Main).launch {
-                Toast.makeText(this@WebViewActivity, "未找到课程表数据，请尝试手动导入或检查是否已登录", Toast.LENGTH_LONG).show()
+                AppToast.error(this@WebViewActivity, "未找到课程表数据，请尝试手动导入或检查是否已登录")
             }
         }
     }

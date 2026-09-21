@@ -22,6 +22,7 @@ import com.cherry.wakeupschedule.App
 import com.cherry.wakeupschedule.BuildConfig
 import com.cherry.wakeupschedule.R
 import com.cherry.wakeupschedule.ui.component.StyledDialog
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -220,7 +221,7 @@ class UpdateService(private val context: Context) {
                 withContext(Dispatchers.Main) {
                     when {
                         info == null -> {
-                            if (showNoUpdateToast) showToast("检查更新失败，请稍后重试")
+                            if (showNoUpdateToast) showErrorToast("检查更新失败，请稍后重试")
                         }
                         // 手动检查不受"跳过此版本"影响：跳过的只是每日静默提醒
                         info.hasUpdate -> {
@@ -233,7 +234,7 @@ class UpdateService(private val context: Context) {
             } catch (e: Exception) {
                 Log.e(TAG, "检查更新失败", e)
                 withContext(Dispatchers.Main) {
-                    if (showNoUpdateToast) showToast("检查更新失败: ${e.message ?: "未知错误"}")
+                    if (showNoUpdateToast) showErrorToast("检查更新失败: ${e.message ?: "未知错误"}")
                 }
             }
         }
@@ -349,7 +350,7 @@ class UpdateService(private val context: Context) {
     // 应用内流式下载入口：复用判断 → 空间预检 → 网络策略 → 启动
     private fun startDownload(info: UpdateInfo) {
         if (info.downloadUrl.isBlank()) {
-            showToast("下载地址为空，无法更新")
+            showErrorToast("下载地址为空，无法更新")
             return
         }
 
@@ -382,14 +383,14 @@ class UpdateService(private val context: Context) {
 
         // 网络可用性预检
         if (!hasNetwork()) {
-            showToast("无网络连接，无法下载")
+            showErrorToast("无网络连接，无法下载")
             return
         }
 
         // 存储空间预检
         val downloadDir = downloadDir()
         if (info.fileSize > 0 && downloadDir.usableSpace < info.fileSize + SPACE_RESERVE_BYTES) {
-            showToast("存储空间不足，无法下载更新")
+            showErrorToast("存储空间不足，无法下载更新")
             return
         }
 
@@ -495,7 +496,7 @@ class UpdateService(private val context: Context) {
                 when (result) {
                     is DownloadResult.Success -> promptInstall(result.file, info)
                     DownloadResult.Canceled -> showToast("已取消下载，进度已保留")
-                    is DownloadResult.Failed -> showToast("下载失败: ${result.reason}")
+                    is DownloadResult.Failed -> showErrorToast("下载失败: ${result.reason}")
                 }
             }
         }
@@ -805,7 +806,7 @@ class UpdateService(private val context: Context) {
             activity.startActivity(intent)
         } catch (e: Exception) {
             Log.e(TAG, "open install permission settings failed", e)
-            showToast("无法打开权限设置页，请到系统设置中开启安装权限")
+            showErrorToast("无法打开权限设置页，请到系统设置中开启安装权限")
         }
     }
 
@@ -903,7 +904,7 @@ class UpdateService(private val context: Context) {
             Log.i(TAG, "install intent launched: ${file.absolutePath}")
         } catch (e: Exception) {
             Log.e(TAG, "launch install failed", e)
-            showToast("安装失败: ${e.message ?: "未知错误"}")
+            showErrorToast("安装失败: ${e.message ?: "未知错误"}")
         }
     }
 
@@ -981,8 +982,11 @@ class UpdateService(private val context: Context) {
     }
 
     private fun showToast(message: String) {
-        CoroutineScope(Dispatchers.Main).launch {
-            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
-        }
+        AppToast.info(context, message, AppToast.Duration.LONG)
+    }
+
+    /** 失败/不可用类文案走错误态（红色 + 错误图标），与普通进度提示区分 */
+    private fun showErrorToast(message: String) {
+        AppToast.error(context, message)
     }
 }

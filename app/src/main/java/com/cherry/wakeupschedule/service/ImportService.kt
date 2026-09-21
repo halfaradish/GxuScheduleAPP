@@ -3,7 +3,7 @@ package com.cherry.wakeupschedule.service
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import android.widget.Toast
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import com.cherry.wakeupschedule.model.Course
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,7 +34,7 @@ class ImportService(private val context: Context) {
         } catch (e: Exception) {
             Log.e("ImportService", "导入失败", e)
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "导入失败: ${e.message}\n请检查文件格式", Toast.LENGTH_LONG).show()
+                AppToast.error(context, "导入失败: ${e.message}\n请检查文件格式")
             }
             false
         }
@@ -55,7 +55,7 @@ class ImportService(private val context: Context) {
 
                 if (courses.isEmpty()) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "JSON 文件中未找到有效课程数据", Toast.LENGTH_LONG).show()
+                        AppToast.error(context, "JSON 文件中未找到有效课程数据")
                     }
                     return@withContext false
                 }
@@ -73,7 +73,7 @@ class ImportService(private val context: Context) {
                 val merged = mergeCourses(courses)
                 courseDataManager.addCourses(merged)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "成功导入 ${merged.size} 门课程", Toast.LENGTH_SHORT).show()
+                    AppToast.success(context, "成功导入 ${merged.size} 门课程", groupKey = "import_success")
                 }
                 Log.d("ImportService", "JSON 导入成功: ${merged.size} 门课程 (schema_version=${package_.schemaVersion})")
                 return@withContext true
@@ -82,7 +82,7 @@ class ImportService(private val context: Context) {
         } catch (e: Exception) {
             Log.e("ImportService", "JSON 导入失败", e)
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "JSON 导入失败: ${e.message}", Toast.LENGTH_LONG).show()
+                AppToast.error(context, "JSON 导入失败: ${e.message}")
             }
             false
         }
@@ -107,18 +107,18 @@ class ImportService(private val context: Context) {
                             try {
                                 return@withContext importFromCsvStream(BufferedReader(InputStreamReader(csvStream, "UTF-8")))
                             } catch (e2: Exception) {
-                                withContext(Dispatchers.Main) { Toast.makeText(context, "无法识别文件格式", Toast.LENGTH_LONG).show() }
+                                withContext(Dispatchers.Main) { AppToast.error(context, "无法识别文件格式") }
                                 return@withContext false
                             }
                         }
                     }
                 }
             }
-            withContext(Dispatchers.Main) { Toast.makeText(context, "无法读取文件内容", Toast.LENGTH_LONG).show() }
+            withContext(Dispatchers.Main) { AppToast.error(context, "无法读取文件内容") }
             false
         } catch (e: Exception) {
             Log.e("ImportService", "tryImportByContent失败", e)
-            withContext(Dispatchers.Main) { Toast.makeText(context, "导入失败: ${e.message}", Toast.LENGTH_LONG).show() }
+            withContext(Dispatchers.Main) { AppToast.error(context, "导入失败: ${e.message}") }
             false
         }
     }
@@ -147,12 +147,12 @@ class ImportService(private val context: Context) {
                 line?.let { parseCsvLine(it, lineNumber)?.let { course -> courses.add(course) } }
             }
             if (courses.isEmpty()) {
-                withContext(Dispatchers.Main) { Toast.makeText(context, "未找到有效课程数据", Toast.LENGTH_LONG).show() }
+                withContext(Dispatchers.Main) { AppToast.error(context, "未找到有效课程数据") }
                 return@withContext false
             }
             val merged = mergeCourses(courses)
             courseDataManager.addCourses(merged)
-            withContext(Dispatchers.Main) { Toast.makeText(context, "成功导入 ${merged.size} 门课程", Toast.LENGTH_SHORT).show() }
+            withContext(Dispatchers.Main) { AppToast.success(context, "成功导入 ${merged.size} 门课程", groupKey = "import_success") }
             Log.d("ImportService", "成功导入 ${merged.size} 门课程")
             true
         } catch (e: Exception) {
@@ -178,14 +178,14 @@ class ImportService(private val context: Context) {
                         else -> for (i in 1..sheet.lastRowNum) sheet.getRow(i)?.let { parseAutoDetectExcelRow(it)?.let { c -> courses.add(c) } }
                     }
                     if (courses.isEmpty()) {
-                        withContext(Dispatchers.Main) { Toast.makeText(context, "未找到有效课程数据", Toast.LENGTH_LONG).show() }
+                        withContext(Dispatchers.Main) { AppToast.error(context, "未找到有效课程数据") }
                         workbook.close()
                         return@withContext false
                     }
                     val merged = mergeCourses(courses)
                     courseDataManager.addCourses(merged)
                     workbook.close()
-                    withContext(Dispatchers.Main) { Toast.makeText(context, "成功导入 ${merged.size} 门课程", Toast.LENGTH_SHORT).show() }
+                    withContext(Dispatchers.Main) { AppToast.success(context, "成功导入 ${merged.size} 门课程", groupKey = "import_success") }
                     return@withContext true
                 }
             }

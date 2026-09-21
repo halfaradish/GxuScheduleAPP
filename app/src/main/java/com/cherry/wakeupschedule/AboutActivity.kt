@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import androidx.core.view.WindowCompat
 import com.cherry.wakeupschedule.BuildConfig
 import com.cherry.wakeupschedule.service.SettingsManager
@@ -76,7 +76,7 @@ class AboutActivity : BaseActivity() {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "无法打开链接", Toast.LENGTH_SHORT).show()
+            AppToast.error(this, "无法打开链接")
         }
     }
 }

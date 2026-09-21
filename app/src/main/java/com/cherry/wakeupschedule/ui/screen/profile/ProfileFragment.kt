@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.cherry.wakeupschedule.AboutActivity
@@ -54,7 +54,7 @@ class ProfileFragment : Fragment() {
 
         view.findViewById<View>(R.id.item_profile).setOnClickListener {
             if (!JwxtAuthManager.isBound()) {
-                Toast.makeText(requireContext(), "请先绑定教务账号", Toast.LENGTH_SHORT).show()
+                AppToast.warn(requireContext(), "请先绑定教务账号")
                 return@setOnClickListener
             }
             startActivity(Intent(requireContext(), ProfileActivity::class.java))
@@ -74,7 +74,7 @@ class ProfileFragment : Fragment() {
                     JwxtAuthManager.unbind()
                     updateAccountSection()
                     updateDisplay()
-                    Toast.makeText(requireContext(), "已解绑教务账号", Toast.LENGTH_SHORT).show()
+                    AppToast.success(requireContext(), "已解绑教务账号")
                 }
                 .negativeButton("取消")
                 .show()
@@ -112,7 +112,7 @@ class ProfileFragment : Fragment() {
                 }
                 startActivity(Intent.createChooser(intent, "发送邮件"))
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "未找到邮件应用", Toast.LENGTH_SHORT).show()
+                AppToast.error(requireContext(), "未找到邮件应用")
             }
         }
     }
@@ -120,7 +120,7 @@ class ProfileFragment : Fragment() {
     private fun showSemesterDialog() {
         val semesters = SemesterManager.getAll()
         if (semesters.isEmpty()) {
-            Toast.makeText(requireContext(), "请先绑定教务账号", Toast.LENGTH_SHORT).show()
+            AppToast.warn(requireContext(), "请先绑定教务账号")
             return
         }
 

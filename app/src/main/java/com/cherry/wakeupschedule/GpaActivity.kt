@@ -11,7 +11,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import androidx.annotation.DimenRes
 import androidx.core.view.WindowCompat
 import androidx.core.widget.addTextChangedListener
@@ -178,12 +178,12 @@ class GpaActivity : BaseActivity() {
     private fun calculate() {
         if (calculating) return
         if (!JwxtAuthManager.isBound()) {
-            toast("请先绑定教务账号")
+            AppToast.warn(this, "请先绑定教务账号")
             return
         }
         val targets = SemesterManager.getAll()
         if (targets.isEmpty()) {
-            toast("没有可用学期，请先绑定教务账号")
+            AppToast.warn(this, "没有可用学期，请先绑定教务账号")
             return
         }
 
@@ -220,7 +220,7 @@ class GpaActivity : BaseActivity() {
             setCalculating(false)
             renderSummary()
             render()
-            toast("已更新 $totalCount 条成绩")
+            AppToast.success(this@GpaActivity, "已更新 $totalCount 条成绩")
         }
     }
 
@@ -525,8 +525,9 @@ class GpaActivity : BaseActivity() {
     private val onSurfaceVariantColor: Int
         get() = themeColor(com.google.android.material.R.attr.colorOnSurfaceVariant)
 
+    /** 页面内轻提示；失败类文案请直接用 AppToast.error */
     private fun toast(text: String) =
-        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+        AppToast.info(this, text)
 
     private fun dp(value: Int): Int =
         (value * resources.displayMetrics.density).roundToInt()

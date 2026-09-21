@@ -13,4 +13,9 @@
 
     <!-- 危险操作专用色：浅色经典红（深色下各主题 colorError 偏粉，统一用鲜艳红保证警示感） -->
     <color name="danger_color">#B3261E</color>
+
+    <!-- 应用内提示卡语义色：成功（浅色下压暗保证在浅底上的对比度） -->
+    <color name="success_color">#1E8E3E</color>
+    <!-- 应用内提示卡语义色：警告（浅色下用深琥珀，避免纯黄在浅底上不可读） -->
+    <color name="warn_color">#B26A00</color>
 </resources>

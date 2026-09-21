@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.widget.TextView
-import android.widget.Toast
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import androidx.core.view.WindowCompat
 import com.cherry.wakeupschedule.databinding.ActivityTimeTableEditBinding
 import com.cherry.wakeupschedule.service.TimeTableManager
@@ -46,7 +46,7 @@ class TimeTableEditActivity : BaseActivity() {
 
         binding.btnResetToDefault.setOnConfirmed {
             timeTableManager.resetToDefault()
-            Toast.makeText(this, "已重置为默认时间表", Toast.LENGTH_SHORT).show()
+            AppToast.success(this, "已重置为默认时间表")
             loadAndDisplayTimeSlots()
         }
 
@@ -167,7 +167,7 @@ class TimeTableEditActivity : BaseActivity() {
                 slotView.tvEndTime.text.toString()
             )
         }
-        Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show()
+        AppToast.success(this, "保存成功")
         finish()
     }
 

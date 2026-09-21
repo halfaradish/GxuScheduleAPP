@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
@@ -159,11 +159,11 @@ class ExamScheduleActivity : BaseActivity() {
     private fun querySelectedSemester() {
         val semester = currentSemester()
         if (semester == null) {
-            toast("请先选择学期")
+            AppToast.warn(this, "请先选择学期")
             return
         }
         if (!JwxtAuthManager.isBound()) {
-            toast("请先绑定教务账号")
+            AppToast.warn(this, "请先绑定教务账号")
             return
         }
         picker.collapse()
@@ -174,7 +174,11 @@ class ExamScheduleActivity : BaseActivity() {
                 .fetchAndSaveExamsForSemester(this@ExamScheduleActivity, semester)
             if (isFinishing || isDestroyed) return@launch
             result.onSuccess { count ->
-                toast(if (count == 0) "该学期暂无考试安排" else "已更新 $count 条考试安排")
+                if (count == 0) {
+                    toast("该学期暂无考试安排")
+                } else {
+                    AppToast.success(this@ExamScheduleActivity, "已更新 $count 条考试安排")
+                }
                 refreshSemesterOptions()
                 renderExams()
             }.onFailure { error ->
@@ -294,8 +298,9 @@ class ExamScheduleActivity : BaseActivity() {
         btnQuery.alpha = if (loading) 0.5f else 1f
     }
 
+    /** 页面内轻提示；失败类文案请直接用 AppToast.error */
     private fun toast(text: String) =
-        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+        AppToast.info(this, text)
 
     private fun dp(value: Int): Int =
         (value * resources.displayMetrics.density).roundToInt()

@@ -2,4 +2,9 @@
 <resources>
     <!-- 深色模式危险操作色：饱和亮红，深色背景上醒目且明确是"红"（主题 colorError 深色下偏粉） -->
     <color name="danger_color">#FF5449</color>
+
+    <!-- 应用内提示卡语义色：成功（深色下提亮，保证在深色卡面上的对比度） -->
+    <color name="success_color">#7ED694</color>
+    <!-- 应用内提示卡语义色：警告（深色下提亮琥珀） -->
+    <color name="warn_color">#FFB74D</color>
 </resources>

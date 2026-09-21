@@ -16,7 +16,7 @@ import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import android.widget.Toast
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import androidx.core.graphics.ColorUtils
 import com.cherry.wakeupschedule.R
 import com.cherry.wakeupschedule.model.Course
@@ -210,7 +210,7 @@ object SchedulePageDetailDialog {
                     ctx.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 }
             } catch (e: Exception) {
-                Toast.makeText(ctx, "未检测到 QQ，无法跳转加群", Toast.LENGTH_SHORT).show()
+                AppToast.warn(ctx, "未检测到 QQ，无法跳转加群")
             }
         }
     }

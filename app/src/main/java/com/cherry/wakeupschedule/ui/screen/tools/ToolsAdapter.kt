@@ -12,7 +12,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
+import com.cherry.wakeupschedule.ui.feedback.AppToast
 import androidx.core.graphics.ColorUtils
 import androidx.recyclerview.widget.RecyclerView
 import com.cherry.wakeupschedule.R
@@ -334,7 +334,7 @@ class ToolsAdapter : RecyclerView.Adapter<ToolsAdapter.RowViewHolder>() {
         if (action != null) {
             action(v.context)
         } else {
-            Toast.makeText(v.context, "功能开发中，敬请期待", Toast.LENGTH_SHORT).show()
+            AppToast.info(v.context, "功能开发中，敬请期待")
         }
     }
 

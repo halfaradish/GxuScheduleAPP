@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  应用内提示卡（AppToast）单卡布局。
+  文案 / 计数 / 颜色 / 进度线全部由 ToastView 在运行期填充，这里不写死任何文案。
+  外层 MaterialCardView 与 AppSectionCard / DetailSheetCard 同一套 M3 卡片语言。
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_toast"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:minHeight="48dp"
+    app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="6dp"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="12dp">
+
+            <FrameLayout
+                android:id="@+id/fl_icon_chip"
+                android:layout_width="28dp"
+                android:layout_height="28dp">
+
+                <ImageView
+                    android:id="@+id/iv_icon"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/tv_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:ellipsize="end"
+                android:lineSpacingExtra="2dp"
+                android:maxLines="3"
+                android:textColor="?attr/colorOnSurface" />
+
+            <TextView
+                android:id="@+id/tv_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:paddingStart="6dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="6dp"
+                android:paddingBottom="2dp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- 剩余时长进度线：由 ToastView 用 scaleX 从 1 收缩到 0 -->
+        <View
+            android:id="@+id/v_progress"
+            android:layout_width="match_parent"
+            android:layout_height="2dp" />
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
