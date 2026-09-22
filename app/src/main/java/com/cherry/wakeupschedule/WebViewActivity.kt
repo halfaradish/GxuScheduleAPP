@@ -963,7 +963,7 @@ class WebViewActivity : BaseActivity() {
 
                         AppToast.success(
                             this@WebViewActivity,
-                            "成功导入 ${courses.size} 门课程",
+                            "成功导入 ${Course.distinctNameCount(courses)} 门课程",
                             AppToast.Duration.LONG,
                             groupKey = "import_success"
                         )

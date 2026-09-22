@@ -98,6 +98,15 @@ data class Course(
             return bitmap
         }
 
+        /**
+         * 按课程名（trim 后）去重后的门数。
+         *
+         * 与课表页「总课表」的归并口径一致：同名课程（不同教师/教室/时段）算一门。
+         * 用于导入成功提示等「N 门课程」文案，避免按上课时段条数报到几十门。
+         */
+        fun distinctNameCount(courses: List<Course>): Int =
+            courses.map { it.name.trim() }.distinct().size
+
         /** 从连续范围生成位图（每周模式） */
         fun bitmapFromRange(startWeek: Int, endWeek: Int): Long =
             bitmapFromRange(startWeek, endWeek, 0)

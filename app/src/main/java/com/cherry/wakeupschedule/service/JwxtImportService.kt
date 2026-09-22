@@ -280,7 +280,7 @@ object JwxtImportService {
      * 为指定学期从教务系统获取课表并保存到本地数据库。
      * 同时更新学期的开始日期和总周数。
      *
-     * @return 成功时返回导入的课程数量，失败时返回异常
+     * @return 成功时返回导入的课程门数（同名课程算一门，与总课表口径一致），失败时返回异常
      */
     suspend fun fetchAndSaveScheduleForSemester(
         context: Context,
@@ -324,7 +324,8 @@ object JwxtImportService {
                 }
             }
 
-            courses.size
+            // 提示按「同名课程算一门」的口径报数，与总课表条目数一致
+            Course.distinctNameCount(courses)
         }
     }
 }

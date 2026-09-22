@@ -72,10 +72,12 @@ class ImportService(private val context: Context) {
 
                 val merged = mergeCourses(courses)
                 courseDataManager.addCourses(merged)
+                // 提示按「同名课程算一门」的口径报数，与总课表条目数一致
+                val courseCount = Course.distinctNameCount(merged)
                 withContext(Dispatchers.Main) {
-                    AppToast.success(context, "成功导入 ${merged.size} 门课程", groupKey = "import_success")
+                    AppToast.success(context, "成功导入 $courseCount 门课程", groupKey = "import_success")
                 }
-                Log.d("ImportService", "JSON 导入成功: ${merged.size} 门课程 (schema_version=${package_.schemaVersion})")
+                Log.d("ImportService", "JSON 导入成功: $courseCount 门课程 (schema_version=${package_.schemaVersion})")
                 return@withContext true
             }
             false
@@ -152,8 +154,9 @@ class ImportService(private val context: Context) {
             }
             val merged = mergeCourses(courses)
             courseDataManager.addCourses(merged)
-            withContext(Dispatchers.Main) { AppToast.success(context, "成功导入 ${merged.size} 门课程", groupKey = "import_success") }
-            Log.d("ImportService", "成功导入 ${merged.size} 门课程")
+            val courseCount = Course.distinctNameCount(merged)
+            withContext(Dispatchers.Main) { AppToast.success(context, "成功导入 $courseCount 门课程", groupKey = "import_success") }
+            Log.d("ImportService", "成功导入 $courseCount 门课程")
             true
         } catch (e: Exception) {
             Log.e("ImportService", "CSV导入失败", e)
@@ -185,7 +188,8 @@ class ImportService(private val context: Context) {
                     val merged = mergeCourses(courses)
                     courseDataManager.addCourses(merged)
                     workbook.close()
-                    withContext(Dispatchers.Main) { AppToast.success(context, "成功导入 ${merged.size} 门课程", groupKey = "import_success") }
+                    val courseCount = Course.distinctNameCount(merged)
+                    withContext(Dispatchers.Main) { AppToast.success(context, "成功导入 $courseCount 门课程", groupKey = "import_success") }
                     return@withContext true
                 }
             }

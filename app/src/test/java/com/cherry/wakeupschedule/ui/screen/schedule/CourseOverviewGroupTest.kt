@@ -171,6 +171,37 @@ class CourseOverviewGroupTest {
         assertEquals(2, groups[0].courses.size)
     }
 
+    // ── 门数口径（导入成功提示与总课表共用） ─────────────
+
+    @Test
+    fun `去重门数按课程名计算`() {
+        val courses = listOf(
+            course("高等数学", teacher = "张三", dayOfWeek = 1, startTime = 1, endTime = 2),
+            course("高等数学", teacher = "李四", dayOfWeek = 3, startTime = 3, endTime = 4),
+            course("大学英语", dayOfWeek = 2, startTime = 1, endTime = 2)
+        )
+
+        assertEquals(2, Course.distinctNameCount(courses))
+    }
+
+    @Test
+    fun `去重门数与总课表条目数一致`() {
+        val courses = listOf(
+            course("高等数学", dayOfWeek = 1, startTime = 1, endTime = 2),
+            course("高等数学", dayOfWeek = 3, startTime = 3, endTime = 4),
+            course("数据结构综合实践", dayOfWeek = 0, startTime = 0, endTime = 0),
+            course("  大学英语  ", dayOfWeek = 2, startTime = 1, endTime = 2),
+            course("大学英语", dayOfWeek = 4, startTime = 1, endTime = 2)
+        )
+
+        assertEquals(CourseOverviewGroup.build(courses).size, Course.distinctNameCount(courses))
+    }
+
+    @Test
+    fun `空列表去重门数为零`() {
+        assertEquals(0, Course.distinctNameCount(emptyList()))
+    }
+
     // ── 格式化 ───────────────────────────────────────────
 
     @Test
