@@ -46,6 +46,9 @@ class PillBottomNavView @JvmOverloads constructor(
         val icon: ImageView
         val label: TextView
 
+        /** 「课表」页签右上角的小角标（切换周课表 / 总课表），其余页签为 null */
+        val badge: ImageView?
+
         init {
             val density = resources.displayMetrics.density
             fun dp(v: Int) = (v * density).toInt()
@@ -93,9 +96,44 @@ class PillBottomNavView @JvmOverloads constructor(
                 addView(label)
             }
 
+            // 「课表」页签：图标+文字右侧紧贴一个小的转换标志，指示当前是周课表还是总课表。
+            // 它只是指示器、不接收点击 —— 再次点击「课表」页签本身即完成切换（见 MainActivity）。
+            val badgeView = if (tab.id == R.id.nav_schedule) {
+                ImageView(context).apply {
+                    layoutParams = LinearLayout.LayoutParams(dp(16), dp(16)).apply {
+                        marginStart = dp(3)
+                    }
+                    scaleType = ImageView.ScaleType.FIT_CENTER
+                    setImageResource(R.drawable.ic_mtrl_swap_horiz)
+                    setColorFilter(
+                        MaterialColors.getColor(
+                            this@PillBottomNavView,
+                            com.google.android.material.R.attr.colorOnSurfaceVariant
+                        )
+                    )
+                    importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                    visibility = View.GONE
+                }
+            } else {
+                null
+            }
+            badge = badgeView
+
+            // 课表页签把角标和图标+文字拼成一行居中；其余页签保持原样
+            val content = if (badgeView != null) {
+                LinearLayout(context).apply {
+                    orientation = HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    addView(column)
+                    addView(badgeView)
+                }
+            } else {
+                column
+            }
+
             cell = FrameLayout(context).apply {
                 layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
-                addView(column, FrameLayout.LayoutParams(
+                addView(content, FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER
                 ))
                 contentDescription = tab.title
@@ -116,7 +154,7 @@ class PillBottomNavView @JvmOverloads constructor(
     private val items = tabs.map { Item(it) }
     private var selectedId = 0
 
-    /** 页签被点击时回调（含重复点击当前页签） */
+    /** 页签被点击时回调（含重复点击当前页签；再次点击「课表」即切换视图模式） */
     var onItemSelected: ((Int) -> Unit)? = null
 
     init {
@@ -129,15 +167,56 @@ class PillBottomNavView @JvmOverloads constructor(
         items.forEach { addView(it.cell) }
         // 默认选中第一个页签（不播动画，MainActivity 随后会按目的地同步）
         selectInternal(tabs[0].id, animate = false)
+        syncBadgeVisibility()
     }
 
     /** 静默同步选中态（导航目的地变化时由外部调用） */
     fun select(id: Int) = selectInternal(id, animate = selectedId != id)
 
+    /**
+     * 同步课表视图模式到角标外观：总课表激活时用主色，周课表时用普通图标色。
+     * 角标本身是纯装饰（不接收点击、不参与无障碍），模式语义写进「课表」页签的描述里。
+     */
+    fun setScheduleOverview(overview: Boolean) {
+        val item = items.firstOrNull { it.tab.id == R.id.nav_schedule } ?: return
+        item.badge?.setColorFilter(
+            MaterialColors.getColor(
+                this,
+                if (overview) com.google.android.material.R.attr.colorPrimary
+                else com.google.android.material.R.attr.colorOnSurfaceVariant
+            )
+        )
+        item.cell.contentDescription = if (overview) {
+            "课表，当前总课表，再次点击切换到周课表"
+        } else {
+            "课表，当前周课表，再次点击切换到总课表"
+        }
+    }
+
     private fun selectInternal(id: Int, animate: Boolean) {
-        if (id != 0 && id == selectedId) return
+        // 重复选中同一页签时也要校准角标（冷启动首次同步走的就是这条分支）
+        if (id != 0 && id == selectedId) {
+            syncBadgeVisibility()
+            return
+        }
         selectedId = id
         items.forEach { bindItem(it, it.tab.id == id, animate) }
+        syncBadgeVisibility()
+    }
+
+    /** 转换角标只在「课表」页签激活时出现，避免在工具/我的页误触 */
+    private fun syncBadgeVisibility() {
+        val badge = items.firstOrNull { it.tab.id == R.id.nav_schedule }?.badge ?: return
+        if (selectedId == R.id.nav_schedule) {
+            if (badge.visibility != View.VISIBLE) {
+                badge.alpha = 0f
+                badge.visibility = View.VISIBLE
+                badge.animate().alpha(1f).setDuration(160).start()
+            }
+        } else if (badge.visibility == View.VISIBLE) {
+            badge.animate().cancel()
+            badge.visibility = View.GONE
+        }
     }
 
     private fun bindItem(item: Item, active: Boolean, animate: Boolean) {

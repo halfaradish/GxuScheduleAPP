@@ -31,6 +31,12 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     private val courseDataManager = CourseDataManager.getInstance(application)
     private val settingsManager = SettingsManager(application)
     private val holidayManager = HolidayManager.getInstance(application)
+
+    // 课表视图模式：false = 周课表，true = 总课表（本学期课程全览）。
+    // 只活在内存（Activity 级 ViewModel）：切 tab / 重建 Activity 保持，但每次进入应用都默认周课表。
+    private val _overviewMode = MutableLiveData(false)
+    val overviewMode: LiveData<Boolean> = _overviewMode
+
     @Volatile
     private var activeWeek: Int = calculateCurrentWeek()
 
@@ -155,6 +161,14 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
             courseDataManager.refreshCourses()
         }
     }
+
+    /** 切换课表视图模式（周课表 ⇄ 总课表）。不持久化，下次进入应用默认周课表 */
+    fun setOverviewMode(enabled: Boolean) {
+        if (_overviewMode.value == enabled) return
+        _overviewMode.value = enabled
+    }
+
+    fun toggleOverviewMode() = setOverviewMode(_overviewMode.value != true)
 
     // 计算当前周数
     private fun calculateCurrentWeek(): Int {

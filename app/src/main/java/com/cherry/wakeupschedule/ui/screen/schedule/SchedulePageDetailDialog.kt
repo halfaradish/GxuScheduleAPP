@@ -27,7 +27,14 @@ object SchedulePageDetailDialog {
 
     private var currentDialog: Dialog? = null
 
-    fun show(context: Context, course: Course, courseColors: IntArray) {
+    /**
+     * 展示课程详情。
+     *
+     * [courses] 为同一门课的全部课程行：周课表传入单门；总课表传入同名课程的全部时段。
+     * 时间行按 (星期, 开始节次, 结束节次) 去重排序后逐行展示，周次取所有行位图的并集。
+     */
+    fun show(context: Context, courses: List<Course>, courseColors: IntArray) {
+        if (courses.isEmpty()) return
         // 防止连点打开多个详情弹窗（旧弹窗可能已随 Activity 销毁，安全关闭）
         dismissCurrent()
         val dialog = Dialog(context, R.style.BottomSheetDialog)
@@ -49,24 +56,14 @@ object SchedulePageDetailDialog {
         sheetBg.setColor(typedValue.data)
         sheetView.background = sheetBg
 
-        val ttm = TimeTableManager.getInstance(context)
-        val startSlot = ttm.getTimeSlots().find { it.node == course.startTime }
-        val endSlot = ttm.getTimeSlots().find { it.node == course.endTime }
-        val timeText = if (startSlot != null && endSlot != null) {
-            "${startSlot.startTime} - ${endSlot.endTime}"
-        } else {
-            "第${course.startTime}-${course.endTime}节"
-        }
-        val weekDays = arrayOf("", "周一", "周二", "周三", "周四", "周五", "周六", "周日")
-        val dayText = weekDays.getOrElse(course.dayOfWeek) { "" }
-
-        // 课程主色：与课表卡片取色逻辑保持一致
-        val ci = if (course.color > 0) (course.color - 1) % courseColors.size else 0
-        val courseColor = courseColors[ci]
+        val slots = TimeTableManager.getInstance(context).getTimeSlots()
+        val primary = courses.first()
+        val courseColor = if (courseColors.isEmpty()) 0
+            else courseColors[if (primary.color > 0) (primary.color - 1) % courseColors.size else 0]
 
         // ── 头部：课程色圆形头像（取课程名首字） ──
         sheetView.findViewById<TextView>(R.id.iv_detail_avatar)?.apply {
-            text = course.name.trim().take(1).ifEmpty { "课" }
+            text = primary.name.trim().take(1).ifEmpty { "课" }
             setTextColor(Color.WHITE)
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
@@ -74,8 +71,9 @@ object SchedulePageDetailDialog {
             }
         }
 
-        // ── 头部：课程类别徽章（非空才显示） ──
-        val category = course.courseCategory.trim()
+        // ── 头部：课程类别徽章（组内第一个非空值，都没有则隐藏） ──
+        val category = courses.firstOrNull { it.courseCategory.isNotBlank() }
+            ?.courseCategory?.trim() ?: ""
         sheetView.findViewById<TextView>(R.id.tv_detail_category)?.apply {
             if (category.isEmpty()) {
                 visibility = View.GONE
@@ -91,13 +89,17 @@ object SchedulePageDetailDialog {
             }
         }
 
-        sheetView.findViewById<TextView>(R.id.tv_detail_name)?.text = course.name
-        sheetView.findViewById<TextView>(R.id.tv_detail_teacher)?.text = course.teacher.ifBlank { "未知" }
-        sheetView.findViewById<TextView>(R.id.tv_detail_classroom)?.text = course.classroom.ifBlank { "未知" }
-        sheetView.findViewById<TextView>(R.id.tv_detail_time)?.text = "$dayText $timeText"
-        sheetView.findViewById<TextView>(R.id.tv_detail_week)?.text = formatWeeks(course.weekBitmap)
-        sheetView.findViewById<TextView>(R.id.tv_detail_credit)?.text = course.credits.trim().ifBlank { "未设置" }
-        setupQqGroupJump(sheetView, course)
+        sheetView.findViewById<TextView>(R.id.tv_detail_name)?.text = primary.name
+        sheetView.findViewById<TextView>(R.id.tv_detail_teacher)?.text =
+            joinDistinct(courses) { it.teacher }.ifBlank { "未知" }
+        sheetView.findViewById<TextView>(R.id.tv_detail_classroom)?.text =
+            joinDistinct(courses) { it.classroom }.ifBlank { "未知" }
+        sheetView.findViewById<TextView>(R.id.tv_detail_time)?.text = formatSessions(slots, courses)
+        sheetView.findViewById<TextView>(R.id.tv_detail_week)?.text =
+            formatWeekRanges(courses.fold(0L) { acc, c -> acc or c.weekBitmap })
+        sheetView.findViewById<TextView>(R.id.tv_detail_credit)?.text =
+            courses.firstOrNull { it.credits.isNotBlank() }?.credits?.trim().orEmpty().ifBlank { "未设置" }
+        setupQqGroupJump(sheetView, courses.firstOrNull { it.qqGroup.isNotBlank() } ?: primary)
 
         dialog.setContentView(sheetView)
         val container = LinearLayout(context).apply {
@@ -216,25 +218,33 @@ object SchedulePageDetailDialog {
     }
 
     /**
-     * 把周次位图格式化为原始信息：连续周合并为区间，其余逐周列出。
-     * 例：第1-16周 / 第1-5、7-10、13周 / 第1、3、5周
+     * 把同一门课的全部上课时段格式化为多行文本（总课表合并同名课程后会有多行）。
+     * 例：周一 08:00 - 09:40\n周三 10:00 - 11:40
      */
-    private fun formatWeeks(bitmap: Long): String {
-        val list = Course.bitmapToWeekList(bitmap)
-        if (list.isEmpty()) return "周次未设置"
-        val parts = mutableListOf<String>()
-        var start = list[0]
-        var prev = list[0]
-        for (i in 1 until list.size) {
-            if (list[i] == prev + 1) {
-                prev = list[i]
-                continue
+    private fun formatSessions(
+        slots: List<TimeTableManager.TimeSlot>,
+        courses: List<Course>
+    ): String {
+        // 实践课没有星期/节次，时间行退化为「无固定时间」
+        if (courses.none { it.hasFixedTime() }) return "无固定时间"
+        return courses
+            .filter { it.hasFixedTime() }
+            .map { Triple(it.dayOfWeek, it.startTime, it.endTime) }
+            .distinct()
+            .sortedWith(compareBy({ it.first }, { it.second }, { it.third }))
+            .joinToString("\n") { (day, startTime, endTime) ->
+                val startSlot = slots.find { it.node == startTime }
+                val endSlot = slots.find { it.node == endTime }
+                val timeText = if (startSlot != null && endSlot != null) {
+                    "${startSlot.startTime} - ${endSlot.endTime}"
+                } else {
+                    "第${startTime}-${endTime}节"
+                }
+                "${dayOfWeekLabel(day)} $timeText"
             }
-            parts.add(if (start == prev) "$start" else "$start-$prev")
-            start = list[i]
-            prev = list[i]
-        }
-        parts.add(if (start == prev) "$start" else "$start-$prev")
-        return "第" + parts.joinToString("、") + "周"
     }
+
+    /** 组内某字段的非空去重值，用「、」连接（教师 / 教室等） */
+    private fun joinDistinct(courses: List<Course>, selector: (Course) -> String): String =
+        courses.map { selector(it).trim() }.filter { it.isNotEmpty() }.distinct().joinToString("、")
 }

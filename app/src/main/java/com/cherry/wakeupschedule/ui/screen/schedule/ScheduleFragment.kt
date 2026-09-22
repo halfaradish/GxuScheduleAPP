@@ -23,6 +23,8 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.cherry.wakeupschedule.App
 import com.cherry.wakeupschedule.R
@@ -35,6 +37,7 @@ import com.cherry.wakeupschedule.service.SemesterManager
 import com.cherry.wakeupschedule.service.SettingsManager
 import com.cherry.wakeupschedule.service.TimeTableManager
 import com.cherry.wakeupschedule.ui.adapter.WeekPagerAdapter
+import com.cherry.wakeupschedule.ui.theme.ThemeManager
 import com.cherry.wakeupschedule.ui.widget.SemesterSceneryView
 import com.cherry.wakeupschedule.viewmodel.CourseViewModel
 import kotlinx.coroutines.Dispatchers
@@ -61,8 +64,19 @@ class ScheduleFragment : Fragment() {
     private lateinit var settingsManager: SettingsManager
     private lateinit var adapter: WeekPagerAdapter
     private lateinit var courseViewModel: CourseViewModel
+    private lateinit var layoutDateHeader: View
+    private lateinit var layoutOverview: View
+    private lateinit var rvCourseOverview: RecyclerView
+    private lateinit var llOverviewEmpty: View
+    private val overviewAdapter = CourseOverviewAdapter()
 
     private var allCourses: List<Course> = emptyList()
+
+    /** 当前是否处于总课表视图（周课表 ⇄ 总课表，由底部导航角标切换） */
+    private var isOverview = false
+
+    /** 总课表条目数（按课程名归并后），用于顶栏「本学期共 N 门课程」 */
+    private var overviewGroupCount = 0
 
     /** 当前显示的课表菜单底部弹窗，防止连点叠加 */
     private var activeMenuDialog: Dialog? = null
@@ -120,6 +134,12 @@ class ScheduleFragment : Fragment() {
         groupLoading = view.findViewById(R.id.group_loading)
         groupSuccess = view.findViewById(R.id.group_success)
         tvLoadResult = view.findViewById(R.id.tv_load_result)
+        layoutDateHeader = view.findViewById(R.id.layout_date_header)
+        layoutOverview = view.findViewById(R.id.layout_overview)
+        rvCourseOverview = view.findViewById(R.id.rv_course_overview)
+        llOverviewEmpty = view.findViewById(R.id.ll_overview_empty)
+        rvCourseOverview.layoutManager = LinearLayoutManager(requireContext())
+        rvCourseOverview.adapter = overviewAdapter
 
         btnRefresh.setOnClickListener {
             refreshScheduleFromJwxt(showError = true)
@@ -187,7 +207,36 @@ class ScheduleFragment : Fragment() {
         viewModel.courses.observe(viewLifecycleOwner) { _ ->
             allCourses = CourseDataManager.getInstance(requireContext()).getAllCourses()
             adapter.updateData(allCourses)
+            // 总课表下数据变化（切学期 / 导入 / 刷新）同样要重建列表
+            if (isOverview) refreshOverview()
         }
+        viewModel.overviewMode.observe(viewLifecycleOwner) { applyScheduleMode(it) }
+    }
+
+    /**
+     * 切换「周课表 ⇄ 总课表」：两者共用顶部信息栏，只互斥日期表头 + 周网格与总课表列表。
+     */
+    private fun applyScheduleMode(overview: Boolean) {
+        isOverview = overview
+        layoutDateHeader.isVisible = !overview
+        viewPager.isVisible = !overview
+        layoutOverview.isVisible = overview
+        if (overview) refreshOverview() else updateDateTimeHeader()
+    }
+
+    /**
+     * 重建总课表列表：当前学期全部课程按课程名归并成条目，
+     * 取色与周课表一致（[ThemeManager.getCourseColors]）。
+     */
+    private fun refreshOverview() {
+        val groups = CourseOverviewGroup.build(
+            CourseDataManager.getInstance(requireContext()).getAllCourses()
+        )
+        overviewGroupCount = groups.size
+        overviewAdapter.submit(groups, ThemeManager.getCourseColors())
+        rvCourseOverview.isVisible = groups.isNotEmpty()
+        llOverviewEmpty.isVisible = groups.isEmpty()
+        updateDateTimeHeader()
     }
 
     private fun calculateCurrentWeek(): Int {
@@ -198,6 +247,15 @@ class ScheduleFragment : Fragment() {
     }
 
     private fun updateDateTimeHeader() {
+        val semesterLabel = SemesterManager.getCurrent()?.label?.takeIf { it.isNotBlank() }
+
+        if (isOverview) {
+            // 总课表：顶栏换成总课表标题 + 条目数（日期表头已隐藏，无需刷新）
+            tvWeekInfo.text = if (semesterLabel != null) "总课表 · $semesterLabel" else "总课表"
+            tvDate.text = "本学期共 $overviewGroupCount 门课程"
+            return
+        }
+
         val cal = Calendar.getInstance()
         tvDate.text = dateFormat.format(cal.time)
         val displayWk = getDisplayWeek()
@@ -210,7 +268,6 @@ class ScheduleFragment : Fragment() {
             displayWk == currentWk -> "第${displayWk}周 (本周)"
             else -> "第${displayWk}周"
         }
-        val semesterLabel = SemesterManager.getCurrent()?.label?.takeIf { it.isNotBlank() }
         tvWeekInfo.text = if (semesterLabel != null) "$weekText · $semesterLabel" else weekText
         updateDateHeaderRow(displayWk)
     }
@@ -354,7 +411,7 @@ class ScheduleFragment : Fragment() {
                     courseViewModel.currentWeek = calculateCurrentWeek()
                     allCourses = CourseDataManager.getInstance(requireContext()).getAllCourses()
                     adapter.updateData(allCourses)
-                    updateDateTimeHeader()
+                    if (isOverview) refreshOverview() else updateDateTimeHeader()
                     // 成功：遮罩换成"成功导入 N 门课程"卡片，替代全局 toast
                     showLoadSuccess(count)
                 }.onFailure { e ->

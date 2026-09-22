@@ -67,7 +67,21 @@ data class Course(
         return (weekBitmap shr (week - 1)) and 1L == 1L
     }
 
+    /**
+     * 是否有固定上课时间（星期 + 节次）。
+     *
+     * 教务实践课（sjkList）只有课程名/教师/周次，没有星期与节次，
+     * 以 [NO_FIXED_DAY] / [NO_FIXED_SLOT] 占位：放不进周课表网格，只在总课表列出。
+     */
+    fun hasFixedTime(): Boolean = dayOfWeek in 1..7 && startTime >= 1
+
     companion object {
+        /** 「无固定时间」课程（实践课）的星期占位值 */
+        const val NO_FIXED_DAY = 0
+
+        /** 「无固定时间」课程（实践课）的节次占位值 */
+        const val NO_FIXED_SLOT = 0
+
         /** 从 startWeek/endWeek/weekType 生成位图（迁移用） */
         fun bitmapFromRange(startWeek: Int, endWeek: Int, weekType: Int): Long {
             var bitmap = 0L

@@ -37,33 +37,63 @@ object JwxtImportService {
         return Pair(courses, semesterStart)
     }
 
+    /**
+     * 转换单条课程条目。
+     *
+     * - 理论课（kbList）：星期 + 节次 + 周次齐备，正常进周课表网格；
+     * - 实践课（sjkList）：只有课程名/教师/起止教学周（qsjsz），没有 xqj/jc/jcs，
+     *   按「无固定时间」入库（星期/节次置 0），只在总课表列出；
+     * - 周次与身份都不足以还原课程的条目仍然丢弃。
+     */
     private fun convertEntry(e: CourseEntry): Course? {
         val name = e.courseName ?: return null
-        val teacher = e.teacherName ?: ""
-        val classroom = e.classroom ?: ""
-        val dayOfWeek = e.weekday?.toIntOrNull()?.coerceIn(1, 7) ?: return null
-
-        val periodRange = parsePeriod(e.periodNum ?: e.period ?: return null) ?: return null
-        var bitmap = e.weeks?.let { parseWeekBitmap(it) } ?: 0L
-        // zcd 缺失或解析不出时，回退到周次位掩码 oldzc，避免整门课被丢弃
-        if (bitmap == 0L) bitmap = parseWeekMask(e.weekMask)
+        val bitmap = parseBitmap(e)
         if (bitmap == 0L) return null
 
-        val category = e.courseCategory ?: ""
-        val credits = e.getCredits() ?: ""
-        // 个人课表接口直接返回 QQ群号（qqqh），空值按无群处理
-        val qqGroup = e.getQqGroup()?.trim() ?: ""
+        val dayOfWeek = e.weekday?.toIntOrNull()?.coerceIn(1, 7)
+        val periodRange = parsePeriod(e.periodNum ?: e.period ?: "")
+
+        val isFixedTime = dayOfWeek != null && periodRange != null
+        if (!isFixedTime && !isPracticeEntry(e)) return null
 
         return Course(
-            name = name, teacher = teacher, classroom = classroom,
-            dayOfWeek = dayOfWeek,
-            startTime = periodRange.first, endTime = periodRange.second,
+            name = name,
+            teacher = e.teacherName ?: "",
+            classroom = e.classroom ?: "",
+            dayOfWeek = dayOfWeek ?: Course.NO_FIXED_DAY,
+            startTime = periodRange?.first ?: Course.NO_FIXED_SLOT,
+            endTime = periodRange?.second ?: Course.NO_FIXED_SLOT,
             weekBitmap = bitmap,
-            courseCategory = category,
-            credits = credits,
-            qqGroup = qqGroup,
-            alarmEnabled = true, alarmMinutesBefore = 15
+            courseCategory = e.courseCategory ?: "",
+            credits = e.getCredits() ?: "",
+            // 个人课表接口直接返回 QQ群号（qqqh），空值按无群处理
+            qqGroup = e.getQqGroup()?.trim() ?: "",
+            // 实践课没有固定时间，闹钟无从触发
+            alarmEnabled = isFixedTime,
+            alarmMinutesBefore = 15
         )
+    }
+
+    /**
+     * 解析周次位图：zcd 优先；实践课的周次在 qsjsz（起止教学周，如 "1-16周"）；
+     * 最后回退到周次位掩码 oldzc。
+     */
+    private fun parseBitmap(e: CourseEntry): Long {
+        var bitmap = e.weeks?.let { parseWeekBitmap(it) } ?: 0L
+        if (bitmap == 0L) bitmap = e.practicePeriodRange?.let { parseWeekBitmap(it) } ?: 0L
+        if (bitmap == 0L) bitmap = parseWeekMask(e.weekMask)
+        return bitmap
+    }
+
+    /**
+     * 是否实践课条目：sfsjk == "1"；
+     * 标记缺失时按「没有星期、也没有节次，但有起止教学周」兜底判断。
+     */
+    private fun isPracticeEntry(e: CourseEntry): Boolean {
+        if (e.isPractice == "1") return true
+        val hasWeekday = !e.weekday.isNullOrBlank()
+        val hasPeriod = !(e.periodNum.isNullOrBlank() && e.period.isNullOrBlank())
+        return !hasWeekday && !hasPeriod && !e.practicePeriodRange.isNullOrBlank()
     }
 
     private fun parsePeriod(period: String): Pair<Int, Int>? {
@@ -167,14 +197,16 @@ object JwxtImportService {
      * 算法：查今天有哪些课 → 确定当前是第几周 → 反推第一周周一。
      */
     private fun calculateSemesterStart(courses: List<Course>): Long? {
-        if (courses.isEmpty()) return null
+        // 实践课没有星期/节次，不参与「今天属于第几周」的反推
+        val fixedCourses = courses.filter { it.hasFixedTime() }
+        if (fixedCourses.isEmpty()) return null
 
         val cal = Calendar.getInstance()
         val todayDow = cal.get(Calendar.DAY_OF_WEEK)
         val adjustedToday = if (todayDow == Calendar.SUNDAY) 7 else todayDow - 1
 
         // 找今天的课程
-        val todayCourses = courses.filter { it.dayOfWeek == adjustedToday }
+        val todayCourses = fixedCourses.filter { it.dayOfWeek == adjustedToday }
         val currentWeek: Int = if (todayCourses.isNotEmpty()) {
             todayCourses.minOf { c ->
                 val range = Course.bitmapToWeekRange(c.weekBitmap)
@@ -184,7 +216,7 @@ object JwxtImportService {
             // 今天没课 → 往后找最近有课的一天
             for (offset in 1..7) {
                 val checkDow = ((adjustedToday + offset - 1) % 7) + 1
-                val checkCourses = courses.filter { it.dayOfWeek == checkDow }
+                val checkCourses = fixedCourses.filter { it.dayOfWeek == checkDow }
                 if (checkCourses.isNotEmpty()) {
                     return@calculateSemesterStart computeStart(cal, offset, checkCourses.minOf { c ->
                         val range = Course.bitmapToWeekRange(c.weekBitmap)

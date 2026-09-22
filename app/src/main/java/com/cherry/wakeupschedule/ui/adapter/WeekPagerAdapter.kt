@@ -106,7 +106,8 @@ class WeekPagerAdapter(
             }
 
             // ── 筛选本周课程 ──
-            val weekCourses = allCourses.filter { it.isActiveInWeek(week) }
+            // 实践课没有固定星期/节次，放不进网格（只在总课表列出）
+            val weekCourses = allCourses.filter { it.isActiveInWeek(week) && it.hasFixedTime() }
 
             // ── 空状态 ──
             if (weekCourses.isEmpty()) {
@@ -169,7 +170,7 @@ class WeekPagerAdapter(
                         if (sorted.size > 1) {
                             showOverlapPicker(ctx, sorted, colors)
                         } else {
-                            SchedulePageDetailDialog.show(ctx, primary, colors)
+                            SchedulePageDetailDialog.show(ctx, listOf(primary), colors)
                         }
                     }
                     setOnTouchListener { v, event ->
@@ -301,7 +302,7 @@ class WeekPagerAdapter(
             val dialog = androidx.appcompat.app.AlertDialog.Builder(ctx)
                 .setTitle("重叠课程 (${courses.size}门)")
                 .setItems(items.toTypedArray()) { _, which ->
-                    SchedulePageDetailDialog.show(ctx, courses[which], colors)
+                    SchedulePageDetailDialog.show(ctx, listOf(courses[which]), colors)
                 }
                 .setNegativeButton("取消", null)
                 .create()
