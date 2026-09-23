@@ -170,7 +170,9 @@ class WeekPagerAdapter(
                         if (sorted.size > 1) {
                             showOverlapPicker(ctx, sorted, colors)
                         } else {
-                            SchedulePageDetailDialog.show(ctx, listOf(primary), colors)
+                            SchedulePageDetailDialog.show(
+                                ctx, listOf(primary), colors, SchedulePageDetailDialog.Source.WEEK
+                            )
                         }
                     }
                     setOnTouchListener { v, event ->
@@ -302,7 +304,9 @@ class WeekPagerAdapter(
             val dialog = androidx.appcompat.app.AlertDialog.Builder(ctx)
                 .setTitle("重叠课程 (${courses.size}门)")
                 .setItems(items.toTypedArray()) { _, which ->
-                    SchedulePageDetailDialog.show(ctx, listOf(courses[which]), colors)
+                    SchedulePageDetailDialog.show(
+                        ctx, listOf(courses[which]), colors, SchedulePageDetailDialog.Source.WEEK
+                    )
                 }
                 .setNegativeButton("取消", null)
                 .create()

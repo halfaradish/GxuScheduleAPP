@@ -100,54 +100,61 @@
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="2dp">
 
-                    <!-- 教师 -->
+                    <!-- 时间：周课表详情保留原样展示；总课表详情整组隐藏（看周次即可） -->
                     <LinearLayout
+                        android:id="@+id/group_detail_time"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:paddingVertical="8dp">
+                        android:orientation="vertical">
 
                         <LinearLayout
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:gravity="center"
-                            android:background="@drawable/bg_icon_chip">
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:paddingVertical="8dp">
 
-                            <ImageView
-                                android:layout_width="16dp"
-                                android:layout_height="16dp"
-                                android:src="@drawable/ic_mtrl_person"
-                                android:tint="?attr/colorOnSecondaryContainer"
-                                android:contentDescription="@null" />
+                            <LinearLayout
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:gravity="center"
+                                android:background="@drawable/bg_icon_chip">
+
+                                <ImageView
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_time"
+                                    android:tint="?attr/colorOnSecondaryContainer"
+                                    android:contentDescription="@null" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="40dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:text="时间"
+                                android:textAppearance="?attr/textAppearanceBodyMedium"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
+
+                            <TextView
+                                android:id="@+id/tv_detail_time"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:gravity="end"
+                                android:text="周一 08:00 - 09:40"
+                                android:textAppearance="?attr/textAppearanceBodyMedium"
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorOnSurface" />
                         </LinearLayout>
 
-                        <TextView
-                            android:layout_width="40dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
-                            android:text="教师"
-                            android:textAppearance="?attr/textAppearanceBodyMedium"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
-
-                        <TextView
-                            android:id="@+id/tv_detail_teacher"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="end"
-                            android:text="未知"
-                            android:textAppearance="?attr/textAppearanceBodyMedium"
-                            android:textStyle="bold"
-                            android:textColor="?attr/colorOnSurface" />
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="0.5dp"
+                            android:layout_marginStart="80dp"
+                            android:background="?attr/colorOutlineVariant"
+                            android:alpha="0.35" />
                     </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:layout_marginStart="80dp"
-                        android:background="?attr/colorOutlineVariant"
-                        android:alpha="0.35" />
 
                     <!-- QQ群（点击跳转加群） -->
                     <LinearLayout
@@ -203,6 +210,55 @@
                             android:tint="?attr/colorOnSurfaceVariant"
                             android:contentDescription="@null"
                             android:visibility="gone" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.5dp"
+                        android:layout_marginStart="80dp"
+                        android:background="?attr/colorOutlineVariant"
+                        android:alpha="0.35" />
+
+                    <!-- 教师 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="8dp">
+
+                        <LinearLayout
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:gravity="center"
+                            android:background="@drawable/bg_icon_chip">
+
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_mtrl_person"
+                                android:tint="?attr/colorOnSecondaryContainer"
+                                android:contentDescription="@null" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="40dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="教师"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+
+                        <TextView
+                            android:id="@+id/tv_detail_teacher"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="end"
+                            android:text="未知"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface" />
                     </LinearLayout>
 
                 </LinearLayout>

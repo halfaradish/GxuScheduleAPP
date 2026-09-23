@@ -20,6 +20,7 @@ import com.cherry.wakeupschedule.ui.feedback.AppToast
 import androidx.core.graphics.ColorUtils
 import com.cherry.wakeupschedule.R
 import com.cherry.wakeupschedule.model.Course
+import com.cherry.wakeupschedule.service.TimeTableManager
 import com.google.android.material.color.MaterialColors
 
 /** 课程详情 Bottom Sheet Dialog，从原始 WeekPageFragment 提取 */
@@ -28,13 +29,23 @@ object SchedulePageDetailDialog {
     private var currentDialog: Dialog? = null
 
     /**
+     * 详情弹层来源，决定版式：
+     * - [Source.WEEK]：周课表点某个节次的卡片，保持原始版式（时间 / QQ群 / 教师 / 学分 / 教室 / 周次）；
+     * - [Source.OVERVIEW]：总课表列表，隐藏时间行，改展示理论课·实践课标签与教务带回的课程信息。
+     */
+    enum class Source { WEEK, OVERVIEW }
+
+    /**
      * 展示课程详情。
      *
      * [courses] 为同一门课的全部课程行：周课表传入单门；总课表传入同名课程的全部时段。
-     * 这里不展示具体上课时间（周次在列表页已能看到），改为聚合展示教务带回的课程信息：
-     * 教师 / 学分 / 教室 / 周次 / 课程类别，以及课程性质、课程代码、教学班、学时、考核方式等。
      */
-    fun show(context: Context, courses: List<Course>, courseColors: IntArray) {
+    fun show(
+        context: Context,
+        courses: List<Course>,
+        courseColors: IntArray,
+        source: Source
+    ) {
         if (courses.isEmpty()) return
         // 防止连点打开多个详情弹窗（旧弹窗可能已随 Activity 销毁，安全关闭）
         dismissCurrent()
@@ -89,7 +100,7 @@ object SchedulePageDetailDialog {
             }
         }
 
-        val isPractice = courses.any { it.isPractice }
+        val isOverview = source == Source.OVERVIEW
 
         sheetView.findViewById<TextView>(R.id.tv_detail_name)?.text = primary.name
         sheetView.findViewById<TextView>(R.id.tv_detail_teacher)?.text =
@@ -100,8 +111,24 @@ object SchedulePageDetailDialog {
             formatWeekRanges(courses.fold(0L) { acc, c -> acc or c.weekBitmap })
         sheetView.findViewById<TextView>(R.id.tv_detail_credit)?.text =
             courses.firstOrNull { it.credits.isNotBlank() }?.credits?.trim().orEmpty().ifBlank { "未设置" }
-        bindTypeBadge(sheetView, isPractice, density)
-        bindExtraInfo(sheetView, courses, density)
+        // 时间行只有周课表详情展示；总课表详情看周次就够，整组（行 + 分隔线）隐藏
+        sheetView.findViewById<View>(R.id.group_detail_time)?.visibility =
+            if (isOverview) View.GONE else View.VISIBLE
+        if (!isOverview) {
+            sheetView.findViewById<TextView>(R.id.tv_detail_time)?.text =
+                weekTimeText(context, primary)
+        }
+
+        // 类型标签与「课程信息」卡是总课表详情新增的内容，周课表保持原始版式
+        if (isOverview) {
+            bindTypeBadge(sheetView, courses.any { it.isPractice }, density)
+            bindExtraInfo(sheetView, courses, density)
+        } else {
+            sheetView.findViewById<TextView>(R.id.tv_detail_type)?.visibility = View.GONE
+            (sheetView.findViewById<View>(R.id.ll_detail_extra)?.parent as? View)?.visibility =
+                View.GONE
+        }
+
         setupQqGroupJump(sheetView, courses.firstOrNull { it.qqGroup.isNotBlank() } ?: primary)
 
         dialog.setContentView(sheetView)
@@ -218,6 +245,22 @@ object SchedulePageDetailDialog {
                 AppToast.warn(ctx, "未检测到 QQ，无法跳转加群")
             }
         }
+    }
+
+    /**
+     * 周课表详情的时间行文案（原始版式）：
+     * 查时间表得 "08:00 - 09:40"，查不到退回 "第X-Y节"，前面拼星期。
+     */
+    private fun weekTimeText(context: Context, course: Course): String {
+        val slots = TimeTableManager.getInstance(context).getTimeSlots()
+        val startSlot = slots.find { it.node == course.startTime }
+        val endSlot = slots.find { it.node == course.endTime }
+        val timeText = if (startSlot != null && endSlot != null) {
+            "${startSlot.startTime} - ${endSlot.endTime}"
+        } else {
+            "第${course.startTime}-${course.endTime}节"
+        }
+        return "${dayOfWeekLabel(course.dayOfWeek)} $timeText"
     }
 
     /** 头部「理论课 / 实践课」标签：实践课走 tertiary，理论课走 primary */

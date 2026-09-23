@@ -64,7 +64,9 @@ class CourseOverviewAdapter : RecyclerView.Adapter<CourseOverviewAdapter.GroupVi
             bindTypeBadge(group.isPractice)
 
             itemView.setOnClickListener {
-                SchedulePageDetailDialog.show(ctx, group.courses, courseColors)
+                SchedulePageDetailDialog.show(
+                    ctx, group.courses, courseColors, SchedulePageDetailDialog.Source.OVERVIEW
+                )
             }
         }
 
