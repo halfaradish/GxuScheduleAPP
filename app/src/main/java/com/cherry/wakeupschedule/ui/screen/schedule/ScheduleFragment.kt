@@ -37,6 +37,7 @@ import com.cherry.wakeupschedule.service.SemesterManager
 import com.cherry.wakeupschedule.service.SettingsManager
 import com.cherry.wakeupschedule.service.TimeTableManager
 import com.cherry.wakeupschedule.ui.adapter.WeekPagerAdapter
+import com.cherry.wakeupschedule.ui.component.createAppChip
 import com.cherry.wakeupschedule.ui.theme.ThemeManager
 import com.cherry.wakeupschedule.ui.widget.SemesterSceneryView
 import com.cherry.wakeupschedule.viewmodel.CourseViewModel
@@ -67,7 +68,9 @@ class ScheduleFragment : Fragment() {
     private lateinit var layoutDateHeader: View
     private lateinit var layoutOverview: View
     private lateinit var rvCourseOverview: RecyclerView
+    private lateinit var llOverviewFilters: LinearLayout
     private lateinit var llOverviewEmpty: View
+    private lateinit var tvOverviewEmpty: TextView
     private val overviewAdapter = CourseOverviewAdapter()
 
     private var allCourses: List<Course> = emptyList()
@@ -75,8 +78,17 @@ class ScheduleFragment : Fragment() {
     /** 当前是否处于总课表视图（周课表 ⇄ 总课表，由底部导航角标切换） */
     private var isOverview = false
 
-    /** 总课表条目数（按课程名归并后），用于顶栏「本学期共 N 门课程」 */
+    /** 总课表全部条目（按课程名归并后，未筛选）；筛选只作用于渲染 */
+    private var overviewGroups: List<CourseOverviewGroup> = emptyList()
+
+    /** 总课表条目总数，用于顶栏「本学期共 N 门课程」 */
     private var overviewGroupCount = 0
+
+    /** 当前筛选下实际展示的条目数 */
+    private var overviewVisibleCount = 0
+
+    /** 总课表顶部筛选：全部 / 理论课 / 实践课 */
+    private var overviewFilter = CourseTypeFilter.ALL
 
     /** 当前显示的课表菜单底部弹窗，防止连点叠加 */
     private var activeMenuDialog: Dialog? = null
@@ -137,9 +149,12 @@ class ScheduleFragment : Fragment() {
         layoutDateHeader = view.findViewById(R.id.layout_date_header)
         layoutOverview = view.findViewById(R.id.layout_overview)
         rvCourseOverview = view.findViewById(R.id.rv_course_overview)
+        llOverviewFilters = view.findViewById(R.id.ll_overview_filters)
         llOverviewEmpty = view.findViewById(R.id.ll_overview_empty)
+        tvOverviewEmpty = view.findViewById(R.id.tv_overview_empty)
         rvCourseOverview.layoutManager = LinearLayoutManager(requireContext())
         rvCourseOverview.adapter = overviewAdapter
+        buildOverviewFilterChips()
 
         btnRefresh.setOnClickListener {
             refreshScheduleFromJwxt(showError = true)
@@ -229,14 +244,46 @@ class ScheduleFragment : Fragment() {
      * 取色与周课表一致（[ThemeManager.getCourseColors]）。
      */
     private fun refreshOverview() {
-        val groups = CourseOverviewGroup.build(
+        overviewGroups = CourseOverviewGroup.build(
             CourseDataManager.getInstance(requireContext()).getAllCourses()
         )
-        overviewGroupCount = groups.size
-        overviewAdapter.submit(groups, ThemeManager.getCourseColors())
-        rvCourseOverview.isVisible = groups.isNotEmpty()
-        llOverviewEmpty.isVisible = groups.isEmpty()
+        overviewGroupCount = overviewGroups.size
+        applyOverviewFilter()
+    }
+
+    /** 按顶部筛选渲染总课表列表；筛选后为空时给出对应的空状态文案 */
+    private fun applyOverviewFilter() {
+        val visible = overviewFilter.apply(overviewGroups)
+        overviewVisibleCount = visible.size
+        overviewAdapter.submit(visible, ThemeManager.getCourseColors())
+        rvCourseOverview.isVisible = visible.isNotEmpty()
+        llOverviewEmpty.isVisible = visible.isEmpty()
+        tvOverviewEmpty.text = if (overviewGroups.isEmpty()) {
+            "本学期暂无课程"
+        } else {
+            "没有「${overviewFilter.label}」的课程"
+        }
         updateDateTimeHeader()
+    }
+
+    /** 重建总课表顶部的「全部 / 理论课 / 实践课」筛选 chip */
+    private fun buildOverviewFilterChips() {
+        llOverviewFilters.removeAllViews()
+        CourseTypeFilter.entries.forEach { filter ->
+            llOverviewFilters.addView(
+                requireContext().createAppChip(
+                    label = filter.label,
+                    selected = filter == overviewFilter,
+                    accent = null,
+                    leadingIcon = null
+                ) {
+                    if (overviewFilter == filter) return@createAppChip
+                    overviewFilter = filter
+                    buildOverviewFilterChips()
+                    applyOverviewFilter()
+                }
+            )
+        }
     }
 
     private fun calculateCurrentWeek(): Int {
@@ -252,7 +299,11 @@ class ScheduleFragment : Fragment() {
         if (isOverview) {
             // 总课表：顶栏换成总课表标题 + 条目数（日期表头已隐藏，无需刷新）
             tvWeekInfo.text = if (semesterLabel != null) "总课表 · $semesterLabel" else "总课表"
-            tvDate.text = "本学期共 $overviewGroupCount 门课程"
+            tvDate.text = if (overviewFilter == CourseTypeFilter.ALL) {
+                "本学期共 $overviewGroupCount 门课程"
+            } else {
+                "${overviewFilter.label} · 共 $overviewVisibleCount 门"
+            }
             return
         }
 

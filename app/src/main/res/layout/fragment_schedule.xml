@@ -182,51 +182,68 @@
             android:layout_weight="1"
             android:orientation="horizontal" />
 
-        <!-- 总课表：当前学期全部课程按课程名归并后的纵向列表（与周课表互斥显示） -->
-        <FrameLayout
+        <!-- 总课表：顶部类型筛选 + 当前学期全部课程按课程名归并后的纵向列表（与周课表互斥显示） -->
+        <LinearLayout
             android:id="@+id/layout_overview"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:orientation="vertical"
             android:visibility="gone">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_course_overview"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingTop="4dp"
-                android:paddingBottom="16dp"
-                android:clipToPadding="false"
-                android:overScrollMode="never"
-                android:scrollbars="none" />
-
-            <!-- 空状态：与周课表的「暂无课程」保持同一套视觉 -->
+            <!-- 全部 / 理论课 / 实践课：chip 由 ScheduleFragment 用 createAppChip 填充 -->
             <LinearLayout
-                android:id="@+id/ll_overview_empty"
+                android:id="@+id/ll_overview_filters"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="top|center_horizontal"
-                android:paddingTop="56dp"
-                android:visibility="gone">
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="4dp" />
 
-                <ImageView
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:src="@drawable/ic_mtrl_calendar_month"
-                    android:alpha="0.3"
-                    android:tint="?attr/colorOnSurfaceVariant"
-                    android:contentDescription="@null" />
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_course_overview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingBottom="16dp"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never"
+                    android:scrollbars="none" />
+
+                <!-- 空状态：与周课表的「暂无课程」保持同一套视觉 -->
+                <LinearLayout
+                    android:id="@+id/ll_overview_empty"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="本学期暂无课程"
-                    android:textSize="@dimen/text_subtitle"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
-            </LinearLayout>
-        </FrameLayout>
+                    android:orientation="vertical"
+                    android:gravity="top|center_horizontal"
+                    android:paddingTop="56dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:src="@drawable/ic_mtrl_calendar_month"
+                        android:alpha="0.3"
+                        android:tint="?attr/colorOnSurfaceVariant"
+                        android:contentDescription="@null" />
+
+                    <TextView
+                        android:id="@+id/tv_overview_empty"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="本学期暂无课程"
+                        android:textSize="@dimen/text_subtitle"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+            </FrameLayout>
+        </LinearLayout>
 
     </LinearLayout>
 

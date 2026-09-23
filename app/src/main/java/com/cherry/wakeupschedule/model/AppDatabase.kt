@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Course::class, AccountEntity::class, SemesterEntity::class, CookieEntity::class, GradeEntity::class, ExamScheduleEntity::class], version = 11, exportSchema = false)
+@Database(entities = [Course::class, AccountEntity::class, SemesterEntity::class, CookieEntity::class, GradeEntity::class, ExamScheduleEntity::class], version = 12, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun courseDao(): CourseDao
@@ -165,6 +165,25 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // courses 表补充教务返回、总课表详情要展示的课程信息。
+                // 非空字段必须带 NOT NULL 且给非空默认值：Room 依 Course 生成的结构是
+                // NOT NULL + DEFAULT，迁移后的列需与其一致，否则启动时表结构校验失败闪退。
+                db.execSQL("ALTER TABLE courses ADD COLUMN is_practice INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE courses ADD COLUMN course_code TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE courses ADD COLUMN course_nature TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE courses ADD COLUMN teaching_class TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE courses ADD COLUMN class_composition TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE courses ADD COLUMN total_hours TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE courses ADD COLUMN hour_composition TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE courses ADD COLUMN classroom_type TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE courses ADD COLUMN assessment_method TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE courses ADD COLUMN exam_form TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE courses ADD COLUMN practice_detail TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         /** grades 表建表 + 索引，7→8 与 8→9 共用，保证两处结构永远一致。 */
         private fun createGradesTable(db: SupportSQLiteDatabase) {
             db.execSQL("""
@@ -233,7 +252,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "schedule.db"
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                     .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }

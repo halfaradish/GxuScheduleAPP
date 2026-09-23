@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 总课表条目：同一课程名的全部课程合并为一张卡。
-     头部「课程色首字头像 + 课程名」，下面依次是教师/上课次数、周次汇总、逐条时段行；
-     整卡可点击，弹出课程详情（多时段在详情里展开） -->
+     只展示「课程名 + 理论课/实践课标签 + 教师 + 有课周次」——具体节次/教室/时间在详情弹层里看。
+     整卡可点击，弹出课程详情 -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -25,7 +25,7 @@
         android:orientation="vertical"
         android:padding="14dp">
 
-        <!-- 头部：课程色首字头像 + 课程名 + 详情箭头 -->
+        <!-- 头部：课程色首字头像 + 课程名 + 类型标签 + 详情箭头 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -54,17 +54,28 @@
                 android:textStyle="bold"
                 android:textColor="?attr/colorOnSurface" />
 
+            <!-- 理论课 / 实践课标签，底色与文字色在 CourseOverviewAdapter 里按类型设置 -->
+            <TextView
+                android:id="@+id/tv_type_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
+                android:textSize="@dimen/text_caption"
+                android:textStyle="bold" />
+
             <ImageView
                 android:id="@+id/iv_chevron"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
                 android:src="@drawable/ic_mtrl_chevron_right"
                 android:tint="?attr/colorOnSurfaceVariant"
                 android:contentDescription="@null" />
         </LinearLayout>
 
-        <!-- 教师 + 上课次数 -->
+        <!-- 教师 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -89,17 +100,9 @@
                 android:ellipsize="end"
                 android:textSize="@dimen/text_body_small"
                 android:textColor="?attr/colorOnSurfaceVariant" />
-
-            <TextView
-                android:id="@+id/tv_session_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:textSize="@dimen/text_caption"
-                android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
 
-        <!-- 周次汇总 -->
+        <!-- 有课周次 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -125,14 +128,6 @@
                 android:textSize="@dimen/text_body_small"
                 android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
-
-        <!-- 时段列表：代码逐条填充 item_course_time.xml -->
-        <LinearLayout
-            android:id="@+id/ll_time_list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:orientation="vertical" />
 
     </LinearLayout>
 

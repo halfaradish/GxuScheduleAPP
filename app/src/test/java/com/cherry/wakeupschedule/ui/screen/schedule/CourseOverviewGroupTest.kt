@@ -20,7 +20,8 @@ class CourseOverviewGroupTest {
         weekBitmap: Long = Course.bitmapFromRange(1, 16),
         credits: String = "",
         category: String = "",
-        color: Int = 1
+        color: Int = 1,
+        isPractice: Boolean = false
     ) = Course(
         name = name,
         teacher = teacher,
@@ -31,7 +32,8 @@ class CourseOverviewGroupTest {
         weekBitmap = weekBitmap,
         credits = credits,
         courseCategory = category,
-        color = color
+        color = color,
+        isPractice = isPractice
     )
 
     // ── 归并 ─────────────────────────────────────────────
@@ -200,6 +202,47 @@ class CourseOverviewGroupTest {
     @Test
     fun `空列表去重门数为零`() {
         assertEquals(0, Course.distinctNameCount(emptyList()))
+    }
+
+    // ── 类型标签与筛选 ───────────────────────────────────
+
+    @Test
+    fun `实践课条目标记为实践课`() {
+        val groups = CourseOverviewGroup.build(
+            listOf(course("数据结构综合实践", dayOfWeek = 0, startTime = 0, endTime = 0, isPractice = true))
+        )
+
+        assertTrue(groups[0].isPractice)
+    }
+
+    @Test
+    fun `同名课程出现实践课条目时整条按实践课归类`() {
+        val groups = CourseOverviewGroup.build(
+            listOf(
+                course("数字电路与逻辑设计实践", isPractice = true),
+                course("数字电路与逻辑设计实践", isPractice = false)
+            )
+        )
+
+        assertEquals(1, groups.size)
+        assertTrue(groups[0].isPractice)
+    }
+
+    @Test
+    fun `筛选按实践课标记而不是有没有固定时间`() {
+        // 集中实践必修但正常排了课的理论课（如文献检索）仍算理论课
+        val theory = course("文献检索", category = "集中实践必修", isPractice = false)
+        val practice = course("数据结构综合实践", dayOfWeek = 0, startTime = 0, endTime = 0, isPractice = true)
+        val groups = CourseOverviewGroup.build(listOf(theory, practice))
+
+        assertEquals(groups, CourseTypeFilter.ALL.apply(groups))
+        assertEquals(listOf("文献检索"), CourseTypeFilter.THEORY.apply(groups).map { it.name })
+        assertEquals(listOf("数据结构综合实践"), CourseTypeFilter.PRACTICE.apply(groups).map { it.name })
+    }
+
+    @Test
+    fun `筛选标签与顺序固定`() {
+        assertEquals(listOf("全部", "理论课", "实践课"), CourseTypeFilter.entries.map { it.label })
     }
 
     // ── 格式化 ───────────────────────────────────────────

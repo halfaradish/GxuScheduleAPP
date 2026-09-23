@@ -16,8 +16,9 @@ data class CourseOverviewSession(
 /**
  * 总课表条目：同一课程名的全部课程合并为一条。
  *
- * 归并规则见 [build]；[courses] 保留原始成员，供课程详情弹层展示全部时段。
- * 实践课（教务 sjkList）没有星期/节次：[hasFixedTime] 为 false 且 [sessions] 为空。
+ * 归并规则见 [build]；[courses] 保留原始成员，供课程详情弹层聚合展示。
+ * 实践课（教务 sjkList）没有星期/节次：[hasFixedTime] 为 false 且 [sessions] 为空，
+ * [isPractice] 为 true，用于列表的类型标签与顶部筛选。
  */
 data class CourseOverviewGroup(
     val name: String,
@@ -27,6 +28,7 @@ data class CourseOverviewGroup(
     val colorIndex: Int,
     val weekBitmap: Long,
     val hasFixedTime: Boolean,
+    val isPractice: Boolean,
     val sessions: List<CourseOverviewSession>,
     val courses: List<Course>
 ) {
@@ -78,6 +80,8 @@ data class CourseOverviewGroup(
                         colorIndex = members.first().color,
                         weekBitmap = members.fold(0L) { acc, c -> acc or c.weekBitmap },
                         hasFixedTime = fixedMembers.isNotEmpty(),
+                        // 同名课程理论上不会又理论又实践；出现混合时按实践课归类
+                        isPractice = members.any { it.isPractice },
                         sessions = sessions,
                         courses = members
                     )
@@ -114,6 +118,24 @@ fun formatWeekRanges(bitmap: Long): String {
     }
     parts.add(if (start == prev) "$start" else "$start-$prev")
     return "第" + parts.joinToString("、") + "周"
+}
+
+/**
+ * 总课表顶部的类型筛选。
+ *
+ * 分类依据是教务的实践课标记（sfsjk）而不是「有没有固定时间」：
+ * 集中实践必修的理论排课（如文献检索）有正常节次，仍算理论课。
+ */
+enum class CourseTypeFilter(val label: String) {
+    ALL("全部"),
+    THEORY("理论课"),
+    PRACTICE("实践课");
+
+    fun apply(groups: List<CourseOverviewGroup>): List<CourseOverviewGroup> = when (this) {
+        ALL -> groups
+        THEORY -> groups.filter { !it.isPractice }
+        PRACTICE -> groups.filter { it.isPractice }
+    }
 }
 
 /** 星期几的中文标签：1..7 → 周一..周日，越界返回空串 */

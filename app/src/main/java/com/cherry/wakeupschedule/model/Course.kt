@@ -44,6 +44,41 @@ data class Course(
     @ColumnInfo(name = "qq_group", defaultValue = "")
     val qqGroup: String = "",                    // QQ群号
 
+    // ── 教务返回、供总课表详情展示的补充信息 ──
+
+    @ColumnInfo(name = "is_practice", defaultValue = "0")
+    val isPractice: Boolean = false,          // 是否实践课（教务 sfsjk）
+
+    @ColumnInfo(name = "course_code", defaultValue = "")
+    val courseCode: String = "",               // 课程代码（kch）
+
+    @ColumnInfo(name = "course_nature", defaultValue = "")
+    val courseNature: String = "",             // 课程性质（kcxz，如 学类/通识）
+
+    @ColumnInfo(name = "teaching_class", defaultValue = "")
+    val teachingClass: String = "",            // 教学班（jxbmc）
+
+    @ColumnInfo(name = "class_composition", defaultValue = "")
+    val classComposition: String = "",         // 教学班组成（jxbzc）
+
+    @ColumnInfo(name = "total_hours", defaultValue = "")
+    val totalHours: String = "",               // 总学时（kczxs）
+
+    @ColumnInfo(name = "hour_composition", defaultValue = "")
+    val hourComposition: String = "",          // 学时组成（kcxszc，如 理论:56,实验:16）
+
+    @ColumnInfo(name = "classroom_type", defaultValue = "")
+    val classroomType: String = "",            // 教室类别（cdlbmc，如 机房/体育场地）
+
+    @ColumnInfo(name = "assessment_method", defaultValue = "")
+    val assessmentMethod: String = "",         // 考核方式（khfsmc，考试/考查）
+
+    @ColumnInfo(name = "exam_form", defaultValue = "")
+    val examForm: String = "",                 // 考试形式（ksfsmc）
+
+    @ColumnInfo(name = "practice_detail", defaultValue = "")
+    val practiceDetail: String = "",           // 实践课描述（sjkcgs）
+
     @ColumnInfo(name = "alarm_enabled", defaultValue = "1")
     val alarmEnabled: Boolean = true,         // 是否启用闹钟提醒
 

@@ -16,6 +16,9 @@ import java.util.Locale
  */
 object JwxtImportService {
 
+    /** 教务用来占位的「空值」写法 */
+    private val PLACEHOLDER_VALUES = setOf("", "无", "*", "-", "/")
+
     /**
      * 将教务课表转换为本地 Course 列表，并计算学期开始日期。
      */
@@ -54,7 +57,8 @@ object JwxtImportService {
         val periodRange = parsePeriod(e.periodNum ?: e.period ?: "")
 
         val isFixedTime = dayOfWeek != null && periodRange != null
-        if (!isFixedTime && !isPracticeEntry(e)) return null
+        val isPractice = isPracticeEntry(e)
+        if (!isFixedTime && !isPractice) return null
 
         return Course(
             name = name,
@@ -68,10 +72,28 @@ object JwxtImportService {
             credits = e.getCredits() ?: "",
             // 个人课表接口直接返回 QQ群号（qqqh），空值按无群处理
             qqGroup = e.getQqGroup()?.trim() ?: "",
+            // 以下为详情展示用的补充信息
+            isPractice = isPractice,
+            courseCode = clean(e.courseCode),
+            courseNature = clean(e.courseNature),
+            teachingClass = clean(e.className),
+            classComposition = clean(e.classComposition),
+            totalHours = clean(e.totalHours),
+            hourComposition = clean(e.hourComposition),
+            classroomType = clean(e.classroomType),
+            assessmentMethod = clean(e.examType),
+            examForm = clean(e.examForm),
+            practiceDetail = clean(e.practiceDetail),
             // 实践课没有固定时间，闹钟无从触发
             alarmEnabled = isFixedTime,
             alarmMinutesBefore = 15
         )
+    }
+
+    /** 教务用空格 /「无」/「*」/「-」表示空值，统一清成空串，详情页据此隐藏该行 */
+    private fun clean(raw: String?): String {
+        val value = raw?.trim().orEmpty()
+        return if (value in PLACEHOLDER_VALUES) "" else value
     }
 
     /**

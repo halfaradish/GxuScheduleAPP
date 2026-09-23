@@ -77,6 +77,16 @@
                         android:textAppearance="?attr/textAppearanceLabelSmall"
                         android:visibility="gone" />
                 </LinearLayout>
+
+                <!-- 理论课 / 实践课标签，底色与文字色在 SchedulePageDetailDialog 里设置 -->
+                <TextView
+                    android:id="@+id/tv_detail_type"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:textAppearance="?attr/textAppearanceLabelSmall" />
             </LinearLayout>
 
             <!-- ── 主信息卡：时间 / QQ群 / 教师 ── -->
@@ -90,7 +100,7 @@
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="2dp">
 
-                    <!-- 时间 -->
+                    <!-- 教师 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -107,7 +117,7 @@
                             <ImageView
                                 android:layout_width="16dp"
                                 android:layout_height="16dp"
-                                android:src="@drawable/ic_time"
+                                android:src="@drawable/ic_mtrl_person"
                                 android:tint="?attr/colorOnSecondaryContainer"
                                 android:contentDescription="@null" />
                         </LinearLayout>
@@ -116,17 +126,17 @@
                             android:layout_width="40dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
-                            android:text="时间"
+                            android:text="教师"
                             android:textAppearance="?attr/textAppearanceBodyMedium"
                             android:textColor="?attr/colorOnSurfaceVariant" />
 
                         <TextView
-                            android:id="@+id/tv_detail_time"
+                            android:id="@+id/tv_detail_teacher"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:gravity="end"
-                            android:text="周一 08:00 - 09:40"
+                            android:text="未知"
                             android:textAppearance="?attr/textAppearanceBodyMedium"
                             android:textStyle="bold"
                             android:textColor="?attr/colorOnSurface" />
@@ -195,54 +205,6 @@
                             android:visibility="gone" />
                     </LinearLayout>
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:layout_marginStart="80dp"
-                        android:background="?attr/colorOutlineVariant"
-                        android:alpha="0.35" />
-
-                    <!-- 教师 -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:paddingVertical="8dp">
-
-                        <LinearLayout
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:gravity="center"
-                            android:background="@drawable/bg_icon_chip">
-
-                            <ImageView
-                                android:layout_width="16dp"
-                                android:layout_height="16dp"
-                                android:src="@drawable/ic_mtrl_person"
-                                android:tint="?attr/colorOnSecondaryContainer"
-                                android:contentDescription="@null" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="40dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
-                            android:text="教师"
-                            android:textAppearance="?attr/textAppearanceBodyMedium"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
-
-                        <TextView
-                            android:id="@+id/tv_detail_teacher"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="end"
-                            android:text="未知"
-                            android:textAppearance="?attr/textAppearanceBodyMedium"
-                            android:textStyle="bold"
-                            android:textColor="?attr/colorOnSurface" />
-                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -409,6 +371,22 @@
                         android:textStyle="bold"
                         android:textColor="?attr/colorOnSurface" />
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ── 课程信息卡：行由 SchedulePageDetailDialog 按数据有无动态填充 ── -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/DetailSheetCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp">
+
+                <LinearLayout
+                    android:id="@+id/ll_detail_extra"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="2dp" />
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>

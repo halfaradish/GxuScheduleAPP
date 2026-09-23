@@ -20,7 +20,7 @@ import com.cherry.wakeupschedule.ui.feedback.AppToast
 import androidx.core.graphics.ColorUtils
 import com.cherry.wakeupschedule.R
 import com.cherry.wakeupschedule.model.Course
-import com.cherry.wakeupschedule.service.TimeTableManager
+import com.google.android.material.color.MaterialColors
 
 /** 课程详情 Bottom Sheet Dialog，从原始 WeekPageFragment 提取 */
 object SchedulePageDetailDialog {
@@ -31,7 +31,8 @@ object SchedulePageDetailDialog {
      * 展示课程详情。
      *
      * [courses] 为同一门课的全部课程行：周课表传入单门；总课表传入同名课程的全部时段。
-     * 时间行按 (星期, 开始节次, 结束节次) 去重排序后逐行展示，周次取所有行位图的并集。
+     * 这里不展示具体上课时间（周次在列表页已能看到），改为聚合展示教务带回的课程信息：
+     * 教师 / 学分 / 教室 / 周次 / 课程类别，以及课程性质、课程代码、教学班、学时、考核方式等。
      */
     fun show(context: Context, courses: List<Course>, courseColors: IntArray) {
         if (courses.isEmpty()) return
@@ -56,7 +57,6 @@ object SchedulePageDetailDialog {
         sheetBg.setColor(typedValue.data)
         sheetView.background = sheetBg
 
-        val slots = TimeTableManager.getInstance(context).getTimeSlots()
         val primary = courses.first()
         val courseColor = if (courseColors.isEmpty()) 0
             else courseColors[if (primary.color > 0) (primary.color - 1) % courseColors.size else 0]
@@ -89,16 +89,19 @@ object SchedulePageDetailDialog {
             }
         }
 
+        val isPractice = courses.any { it.isPractice }
+
         sheetView.findViewById<TextView>(R.id.tv_detail_name)?.text = primary.name
         sheetView.findViewById<TextView>(R.id.tv_detail_teacher)?.text =
             joinDistinct(courses) { it.teacher }.ifBlank { "未知" }
         sheetView.findViewById<TextView>(R.id.tv_detail_classroom)?.text =
             joinDistinct(courses) { it.classroom }.ifBlank { "未知" }
-        sheetView.findViewById<TextView>(R.id.tv_detail_time)?.text = formatSessions(slots, courses)
         sheetView.findViewById<TextView>(R.id.tv_detail_week)?.text =
             formatWeekRanges(courses.fold(0L) { acc, c -> acc or c.weekBitmap })
         sheetView.findViewById<TextView>(R.id.tv_detail_credit)?.text =
             courses.firstOrNull { it.credits.isNotBlank() }?.credits?.trim().orEmpty().ifBlank { "未设置" }
+        bindTypeBadge(sheetView, isPractice, density)
+        bindExtraInfo(sheetView, courses, density)
         setupQqGroupJump(sheetView, courses.firstOrNull { it.qqGroup.isNotBlank() } ?: primary)
 
         dialog.setContentView(sheetView)
@@ -217,32 +220,76 @@ object SchedulePageDetailDialog {
         }
     }
 
-    /**
-     * 把同一门课的全部上课时段格式化为多行文本（总课表合并同名课程后会有多行）。
-     * 例：周一 08:00 - 09:40\n周三 10:00 - 11:40
-     */
-    private fun formatSessions(
-        slots: List<TimeTableManager.TimeSlot>,
-        courses: List<Course>
-    ): String {
-        // 实践课没有星期/节次，时间行退化为「无固定时间」
-        if (courses.none { it.hasFixedTime() }) return "无固定时间"
-        return courses
-            .filter { it.hasFixedTime() }
-            .map { Triple(it.dayOfWeek, it.startTime, it.endTime) }
-            .distinct()
-            .sortedWith(compareBy({ it.first }, { it.second }, { it.third }))
-            .joinToString("\n") { (day, startTime, endTime) ->
-                val startSlot = slots.find { it.node == startTime }
-                val endSlot = slots.find { it.node == endTime }
-                val timeText = if (startSlot != null && endSlot != null) {
-                    "${startSlot.startTime} - ${endSlot.endTime}"
-                } else {
-                    "第${startTime}-${endTime}节"
-                }
-                "${dayOfWeekLabel(day)} $timeText"
-            }
+    /** 头部「理论课 / 实践课」标签：实践课走 tertiary，理论课走 primary */
+    private fun bindTypeBadge(view: View, isPractice: Boolean, density: Float) {
+        val badge = view.findViewById<TextView>(R.id.tv_detail_type) ?: return
+        val color = MaterialColors.getColor(
+            view,
+            if (isPractice) com.google.android.material.R.attr.colorTertiary
+            else com.google.android.material.R.attr.colorPrimary
+        )
+        badge.text = if (isPractice) "实践课" else "理论课"
+        badge.setTextColor(color)
+        badge.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 6 * density
+            setColor(ColorUtils.setAlphaComponent(color, 38))
+        }
     }
+
+    /**
+     * 填充「课程信息」卡：教务返回的补充字段逐行展示，值为空的整行不渲染；
+     * 一行都没有时整张卡隐藏。行布局 item_course_detail_row.xml，行间补一条细分隔线。
+     */
+    private fun bindExtraInfo(view: View, courses: List<Course>, density: Float) {
+        val container = view.findViewById<LinearLayout>(R.id.ll_detail_extra) ?: return
+        container.removeAllViews()
+
+        val rows = listOf(
+            "课程性质" to firstNonBlank(courses) { it.courseNature },
+            "课程代码" to firstNonBlank(courses) { it.courseCode },
+            "教学班" to firstNonBlank(courses) { it.teachingClass },
+            "教学班组成" to firstNonBlank(courses) { it.classComposition },
+            "总学时" to firstNonBlank(courses) { it.totalHours },
+            "学时组成" to firstNonBlank(courses) { it.hourComposition },
+            "考核方式" to firstNonBlank(courses) { it.assessmentMethod },
+            "考试形式" to firstNonBlank(courses) { it.examForm },
+            "教室类别" to firstNonBlank(courses) { it.classroomType },
+            "实践说明" to firstNonBlank(courses) { it.practiceDetail }
+        ).filter { it.second.isNotEmpty() }
+
+        if (rows.isEmpty()) {
+            // 连带把承载它的卡片一起藏掉，避免留一张空卡
+            (container.parent as? View)?.visibility = View.GONE
+            return
+        }
+        (container.parent as? View)?.visibility = View.VISIBLE
+
+        val dividerColor = ColorUtils.setAlphaComponent(
+            MaterialColors.getColor(view, com.google.android.material.R.attr.colorOutlineVariant),
+            0x59
+        )
+        rows.forEachIndexed { index, (label, value) ->
+            val row = LayoutInflater.from(view.context)
+                .inflate(R.layout.item_course_detail_row, container, false)
+            row.findViewById<TextView>(R.id.tv_detail_row_label).text = label
+            row.findViewById<TextView>(R.id.tv_detail_row_value).text = value
+            container.addView(row)
+
+            if (index != rows.lastIndex) {
+                container.addView(View(view.context).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, (0.5f * density).toInt()
+                    ).apply { marginStart = (84 * density).toInt() }
+                    setBackgroundColor(dividerColor)
+                })
+            }
+        }
+    }
+
+    /** 组内第一个非空值（同名课程合并后，补充字段取第一个有值的） */
+    private fun firstNonBlank(courses: List<Course>, selector: (Course) -> String): String =
+        courses.map { selector(it).trim() }.firstOrNull { it.isNotEmpty() } ?: ""
 
     /** 组内某字段的非空去重值，用「、」连接（教师 / 教室等） */
     private fun joinDistinct(courses: List<Course>, selector: (Course) -> String): String =

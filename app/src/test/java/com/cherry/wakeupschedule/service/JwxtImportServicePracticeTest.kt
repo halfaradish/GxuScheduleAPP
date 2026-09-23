@@ -44,8 +44,54 @@ class JwxtImportServicePracticeTest {
         assertEquals(Course.NO_FIXED_DAY, c.dayOfWeek)
         assertEquals(Course.NO_FIXED_SLOT, c.startTime)
         assertFalse(c.hasFixedTime())
+        assertTrue(c.isPractice)
         // 无固定时间 → 不排闹钟
         assertFalse(c.alarmEnabled)
+    }
+
+    @Test
+    fun `理论课带回的补充信息完整映射且占位值被清空`() {
+        val courses = coursesOf(
+            """
+            {"kbList":[{
+              "kcmc":"计算机组成原理","xm":"李娜","cdmc":"计电302",
+              "xqj":"1","jc":"1-2节","jcs":"1-2","zcd":"7-11周(单),12-16周",
+              "kch":"1071198","kcxz":"学类","kclb":"学类核心课",
+              "jxbmc":"计算机组成原理-0003A","jxbzc":"计算机科学与技术241",
+              "kczxs":"72","kcxszc":"理论:56,实验:16","cdlbmc":"机房",
+              "khfsmc":"考试","ksfsmc":"闭卷","zcmc":"无","xqmc":"*"
+            }]}
+            """.trimIndent()
+        )
+
+        assertEquals(1, courses.size)
+        val c = courses[0]
+        assertEquals("1071198", c.courseCode)
+        assertEquals("学类", c.courseNature)
+        assertEquals("计算机组成原理-0003A", c.teachingClass)
+        assertEquals("计算机科学与技术241", c.classComposition)
+        assertEquals("72", c.totalHours)
+        assertEquals("理论:56,实验:16", c.hourComposition)
+        assertEquals("机房", c.classroomType)
+        assertEquals("考试", c.assessmentMethod)
+        assertEquals("闭卷", c.examForm)
+        assertFalse(c.isPractice)
+    }
+
+    @Test
+    fun `实践课描述被带入详情展示字段`() {
+        val courses = coursesOf(
+            """
+            {"sjkList":[{
+              "kcmc":"数据结构综合实践","jsxm":"田阳","qsjsz":"1-16周","sfsjk":"1",
+              "sjkcgs":"数据结构综合实践●田阳(共16周)/1-16周","xf":"1.0"
+            }]}
+            """.trimIndent()
+        )
+
+        assertEquals(1, courses.size)
+        assertEquals("数据结构综合实践●田阳(共16周)/1-16周", courses[0].practiceDetail)
+        assertTrue(courses[0].isPractice)
     }
 
     @Test

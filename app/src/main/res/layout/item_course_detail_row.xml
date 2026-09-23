@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 课程详情「课程信息」卡里的单行：左侧固定宽度标签 + 右侧右对齐值（行间距由代码加分隔线） -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingVertical="9dp">
+
+    <TextView
+        android:id="@+id/tv_detail_row_label"
+        android:layout_width="84dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="?attr/colorOnSurfaceVariant" />
+
+    <TextView
+        android:id="@+id/tv_detail_row_value"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="end"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textStyle="bold"
+        android:textColor="?attr/colorOnSurface" />
+
+</LinearLayout>
