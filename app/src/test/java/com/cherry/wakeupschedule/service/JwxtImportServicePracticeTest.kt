@@ -59,7 +59,8 @@ class JwxtImportServicePracticeTest {
               "kch":"1071198","kcxz":"学类","kclb":"学类核心课",
               "jxbmc":"计算机组成原理-0003A","jxbzc":"计算机科学与技术241",
               "kczxs":"72","kcxszc":"理论:56,实验:16","cdlbmc":"机房",
-              "khfsmc":"考试","ksfsmc":"闭卷","zcmc":"无","xqmc":"*"
+              "khfsmc":"考试","ksfsmc":"闭卷","zcmc":"无","xqmc":"*",
+              "xkrs":"70","zzrl":"68"
             }]}
             """.trimIndent()
         )
@@ -75,6 +76,8 @@ class JwxtImportServicePracticeTest {
         assertEquals("机房", c.classroomType)
         assertEquals("考试", c.assessmentMethod)
         assertEquals("闭卷", c.examForm)
+        assertEquals("68", c.enrolled)
+        assertEquals("70", c.maxStudents)
         assertFalse(c.isPractice)
     }
 

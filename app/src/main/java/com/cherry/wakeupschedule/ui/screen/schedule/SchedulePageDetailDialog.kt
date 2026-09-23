@@ -293,11 +293,13 @@ object SchedulePageDetailDialog {
             "课程代码" to firstNonBlank(courses) { it.courseCode },
             "教学班" to firstNonBlank(courses) { it.teachingClass },
             "教学班组成" to firstNonBlank(courses) { it.classComposition },
+            "选课人数" to formatEnrollment(
+                firstNonBlank(courses) { it.maxStudents },
+                firstNonBlank(courses) { it.enrolled }
+            ),
             "总学时" to firstNonBlank(courses) { it.totalHours },
             "学时组成" to firstNonBlank(courses) { it.hourComposition },
             "考核方式" to firstNonBlank(courses) { it.assessmentMethod },
-            "考试形式" to firstNonBlank(courses) { it.examForm },
-            "教室类别" to firstNonBlank(courses) { it.classroomType },
             "实践说明" to firstNonBlank(courses) { it.practiceDetail }
         ).filter { it.second.isNotEmpty() }
 

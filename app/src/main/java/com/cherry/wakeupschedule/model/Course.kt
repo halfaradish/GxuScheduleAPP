@@ -79,6 +79,12 @@ data class Course(
     @ColumnInfo(name = "practice_detail", defaultValue = "")
     val practiceDetail: String = "",           // 实践课描述（sjkcgs）
 
+    @ColumnInfo(name = "enrolled", defaultValue = "")
+    val enrolled: String = "",                 // 已选人数（zzrl）
+
+    @ColumnInfo(name = "max_students", defaultValue = "")
+    val maxStudents: String = "",              // 选课人数上限（xkrs）
+
     @ColumnInfo(name = "alarm_enabled", defaultValue = "1")
     val alarmEnabled: Boolean = true,         // 是否启用闹钟提醒
 

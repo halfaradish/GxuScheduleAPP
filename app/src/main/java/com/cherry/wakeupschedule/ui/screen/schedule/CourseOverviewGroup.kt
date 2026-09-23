@@ -138,6 +138,15 @@ enum class CourseTypeFilter(val label: String) {
     }
 }
 
+/**
+ * 选课人数文案：已选 / 上限（如 "70 / 70"）；上限缺失时只显示已选，两者都空返回空串。
+ */
+fun formatEnrollment(enrolled: String, maxStudents: String): String = when {
+    enrolled.isEmpty() -> ""
+    maxStudents.isEmpty() -> enrolled
+    else -> "$enrolled / $maxStudents"
+}
+
 /** 星期几的中文标签：1..7 → 周一..周日，越界返回空串 */
 fun dayOfWeekLabel(day: Int): String = when (day) {
     1 -> "周一"

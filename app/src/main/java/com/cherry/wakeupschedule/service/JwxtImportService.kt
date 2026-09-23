@@ -84,6 +84,8 @@ object JwxtImportService {
             assessmentMethod = clean(e.examType),
             examForm = clean(e.examForm),
             practiceDetail = clean(e.practiceDetail),
+            enrolled = clean(e.enrolled),
+            maxStudents = clean(e.maxStudents),
             // 实践课没有固定时间，闹钟无从触发
             alarmEnabled = isFixedTime,
             alarmMinutesBefore = 15

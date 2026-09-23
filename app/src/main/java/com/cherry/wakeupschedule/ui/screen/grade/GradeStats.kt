@@ -221,7 +221,7 @@ object GradeStats {
     /** 学分胶囊文案，如「4.5 学分」 */
     fun formatCreditBadge(grade: GradeEntity): String {
         val credit = parseNumber(grade.credits)
-        return if (credit == null || credit <= 0) "学分未知" else "${formatCredits(credit)} 学分"
+        return if (credit == null) "学分未知" else "${formatCredits(credit)} 学分"
     }
 
     /** 学分数值文案（不带单位，4.0 → 4）；解析不到返回 null，由调用方决定是否展示该行 */

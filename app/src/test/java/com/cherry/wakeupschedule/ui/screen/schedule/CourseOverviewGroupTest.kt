@@ -245,6 +245,24 @@ class CourseOverviewGroupTest {
         assertEquals(listOf("全部", "理论课", "实践课"), CourseTypeFilter.entries.map { it.label })
     }
 
+    // ── 选课人数文案 ─────────────────────────────────────
+
+    @Test
+    fun `选课人数带上限时显示已选与上限`() {
+        assertEquals("68 / 70", formatEnrollment("68", "70"))
+    }
+
+    @Test
+    fun `选课人数缺上限时只显示已选`() {
+        assertEquals("68", formatEnrollment("68", ""))
+    }
+
+    @Test
+    fun `选课人数都为空时返回空串`() {
+        assertEquals("", formatEnrollment("", ""))
+        assertEquals("", formatEnrollment("", "70"))
+    }
+
     // ── 格式化 ───────────────────────────────────────────
 
     @Test

@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Course::class, AccountEntity::class, SemesterEntity::class, CookieEntity::class, GradeEntity::class, ExamScheduleEntity::class], version = 12, exportSchema = false)
+@Database(entities = [Course::class, AccountEntity::class, SemesterEntity::class, CookieEntity::class, GradeEntity::class, ExamScheduleEntity::class], version = 13, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun courseDao(): CourseDao
@@ -165,6 +165,15 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // courses 表补充选课人数（zzrl 已选 / xkrs 上限），总课表详情展示用。
+                // 同样必须 NOT NULL + 非空默认值，与 Room 依 Course 生成的结构一致。
+                db.execSQL("ALTER TABLE courses ADD COLUMN enrolled TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE courses ADD COLUMN max_students TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         private val MIGRATION_11_12 = object : Migration(11, 12) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // courses 表补充教务返回、总课表详情要展示的课程信息。
@@ -252,7 +261,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "schedule.db"
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
                     .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }

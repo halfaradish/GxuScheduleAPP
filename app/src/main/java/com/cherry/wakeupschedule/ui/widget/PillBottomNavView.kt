@@ -83,25 +83,18 @@ class PillBottomNavView @JvmOverloads constructor(
             label = TextView(context).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-                ).apply { topMargin = dp(2) }
+                )
                 text = tab.title
                 setTextSizeRes(R.dimen.text_label)
                 includeFontPadding = false
             }
 
-            val column = LinearLayout(context).apply {
-                orientation = VERTICAL
-                gravity = Gravity.CENTER
-                addView(holder)
-                addView(label)
-            }
-
-            // 「课表」页签：图标+文字右侧紧贴一个小的转换标志，指示当前是周课表还是总课表。
+            // 「课表」页签：在「课表」字样右侧紧贴一个小的循环箭头，指示当前是周课表还是总课表。
             // 它只是指示器、不接收点击 —— 再次点击「课表」页签本身即完成切换（见 MainActivity）。
             val badgeView = if (tab.id == R.id.nav_schedule) {
                 ImageView(context).apply {
-                    layoutParams = LinearLayout.LayoutParams(dp(16), dp(16)).apply {
-                        marginStart = dp(3)
+                    layoutParams = LinearLayout.LayoutParams(dp(14), dp(14)).apply {
+                        marginStart = dp(2)
                     }
                     scaleType = ImageView.ScaleType.FIT_CENTER
                     setImageResource(R.drawable.ic_mtrl_swap_horiz)
@@ -119,21 +112,27 @@ class PillBottomNavView @JvmOverloads constructor(
             }
             badge = badgeView
 
-            // 课表页签把角标和图标+文字拼成一行居中；其余页签保持原样
-            val content = if (badgeView != null) {
-                LinearLayout(context).apply {
-                    orientation = HORIZONTAL
-                    gravity = Gravity.CENTER_VERTICAL
-                    addView(column)
-                    addView(badgeView)
-                }
-            } else {
-                column
+            // 文字行：「课表」与循环箭头同行居中（箭头紧贴字样右侧）；其余页签只有文字
+            val labelRow = LinearLayout(context).apply {
+                orientation = HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = dp(2) }
+                addView(label)
+                if (badgeView != null) addView(badgeView)
+            }
+
+            val column = LinearLayout(context).apply {
+                orientation = VERTICAL
+                gravity = Gravity.CENTER
+                addView(holder)
+                addView(labelRow)
             }
 
             cell = FrameLayout(context).apply {
                 layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
-                addView(content, FrameLayout.LayoutParams(
+                addView(column, FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER
                 ))
                 contentDescription = tab.title
