@@ -84,8 +84,11 @@ object JwxtImportService {
             assessmentMethod = clean(e.examType),
             examForm = clean(e.examForm),
             practiceDetail = clean(e.practiceDetail),
-            enrolled = clean(e.enrolled),
-            maxStudents = clean(e.maxStudents),
+            // 注意 CourseEntry 的字段注释是反的：教务 i18n 里 xkrs = 选课人数（已选），
+            // 实测也恒有 xkrs <= zzrl，即 zzrl = 课程容量。而 getMaxStudents() 取的是 xkrs、
+            // getEnrolled() 取的是 zzrl，所以这里按真实语义落到我们的列。
+            enrolled = clean(e.maxStudents),
+            maxStudents = clean(e.enrolled),
             // 实践课没有固定时间，闹钟无从触发
             alarmEnabled = isFixedTime,
             alarmMinutesBefore = 15

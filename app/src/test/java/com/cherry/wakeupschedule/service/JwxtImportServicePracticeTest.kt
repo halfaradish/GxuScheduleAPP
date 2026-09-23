@@ -1,6 +1,7 @@
 package com.cherry.wakeupschedule.service
 
 import com.cherry.wakeupschedule.model.Course
+import com.cherry.wakeupschedule.ui.screen.schedule.formatEnrollment
 import com.google.gson.Gson
 import com.gxu.jwxt.model.ScheduleResponse
 import org.junit.Assert.assertEquals
@@ -60,7 +61,7 @@ class JwxtImportServicePracticeTest {
               "jxbmc":"计算机组成原理-0003A","jxbzc":"计算机科学与技术241",
               "kczxs":"72","kcxszc":"理论:56,实验:16","cdlbmc":"机房",
               "khfsmc":"考试","ksfsmc":"闭卷","zcmc":"无","xqmc":"*",
-              "xkrs":"70","zzrl":"68"
+              "xkrs":"68","zzrl":"70"
             }]}
             """.trimIndent()
         )
@@ -76,8 +77,10 @@ class JwxtImportServicePracticeTest {
         assertEquals("机房", c.classroomType)
         assertEquals("考试", c.assessmentMethod)
         assertEquals("闭卷", c.examForm)
+        // 教务 xkrs = 选课人数（已选），zzrl = 容量；CourseEntry 的 getter 名字是反的
         assertEquals("68", c.enrolled)
         assertEquals("70", c.maxStudents)
+        assertEquals("68 / 70", formatEnrollment(c.enrolled, c.maxStudents))
         assertFalse(c.isPractice)
     }
 

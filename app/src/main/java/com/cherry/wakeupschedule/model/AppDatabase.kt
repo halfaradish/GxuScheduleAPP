@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Course::class, AccountEntity::class, SemesterEntity::class, CookieEntity::class, GradeEntity::class, ExamScheduleEntity::class], version = 13, exportSchema = false)
+@Database(entities = [Course::class, AccountEntity::class, SemesterEntity::class, CookieEntity::class, GradeEntity::class, ExamScheduleEntity::class], version = 14, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun courseDao(): CourseDao
@@ -165,6 +165,15 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 13 把教务的 xkrs / zzrl 落反了：enrolled 存了容量(zzrl)、max_students 存了
+                // 选课人数(xkrs)。这里把两列的值对调回来 —— SQLite 的 SET 表达式都用更新前的
+                // 行值求值，一条 UPDATE 即可完成交换。
+                db.execSQL("UPDATE courses SET enrolled = max_students, max_students = enrolled")
+            }
+        }
+
         private val MIGRATION_12_13 = object : Migration(12, 13) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // courses 表补充选课人数（zzrl 已选 / xkrs 上限），总课表详情展示用。
@@ -261,7 +270,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "schedule.db"
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
                     .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }

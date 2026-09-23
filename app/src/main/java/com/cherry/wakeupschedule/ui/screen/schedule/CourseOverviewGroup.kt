@@ -139,7 +139,7 @@ enum class CourseTypeFilter(val label: String) {
 }
 
 /**
- * 选课人数文案：已选 / 上限（如 "70 / 70"）；上限缺失时只显示已选，两者都空返回空串。
+ * 选课人数文案：选课人数 / 容量（如 "70 / 90"）；容量缺失时只显示选课人数，两者都空返回空串。
  */
 fun formatEnrollment(enrolled: String, maxStudents: String): String = when {
     enrolled.isEmpty() -> ""

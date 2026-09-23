@@ -294,8 +294,8 @@ object SchedulePageDetailDialog {
             "教学班" to firstNonBlank(courses) { it.teachingClass },
             "教学班组成" to firstNonBlank(courses) { it.classComposition },
             "选课人数" to formatEnrollment(
-                firstNonBlank(courses) { it.maxStudents },
-                firstNonBlank(courses) { it.enrolled }
+                firstNonBlank(courses) { it.enrolled },
+                firstNonBlank(courses) { it.maxStudents }
             ),
             "总学时" to firstNonBlank(courses) { it.totalHours },
             "学时组成" to firstNonBlank(courses) { it.hourComposition },
