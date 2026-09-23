@@ -149,10 +149,10 @@ public class CourseEntry {
     private String selected;            // 是否已选
 
     @SerializedName("xkrs")
-    private String maxStudents;         // 选课人数上限
+    private String enrolledCount;       // 选课人数（已选；课表页「选课人数」列就是它）
 
     @SerializedName("zzrl")
-    private String enrolled;            // 已选人数
+    private String capacity;            // 课程容量（选课人数上限；实测恒有 xkrs <= zzrl）
 
     @SerializedName("sfjf")
     private String isCharge;            // 是否计费
@@ -243,8 +243,22 @@ public class CourseEntry {
     public String getTeachForm() { return teachForm; }
     public String getCourseStatus() { return courseStatus; }
     public String getSelected() { return selected; }
-    public String getMaxStudents() { return maxStudents; }
-    public String getEnrolled() { return enrolled; }
+    public String getEnrolledCount() { return enrolledCount; }
+    public String getCapacity() { return capacity; }
+
+    /**
+     * @deprecated 命名与语义不符：它返回的是<b>选课人数</b>而不是上限。
+     *             请改用 {@link #getEnrolledCount()}。
+     */
+    @Deprecated
+    public String getMaxStudents() { return enrolledCount; }
+
+    /**
+     * @deprecated 命名与语义不符：它返回的是<b>课程容量</b>而不是已选人数。
+     *             请改用 {@link #getCapacity()}。
+     */
+    @Deprecated
+    public String getEnrolled() { return capacity; }
     public String getIsCharge() { return isCharge; }
     public String getRetake() { return retake; }
     public String getRetakeClassName() { return retakeClassName; }
