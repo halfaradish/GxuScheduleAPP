@@ -39,6 +39,7 @@
         <activity android:name=".WebViewActivity" />
         <activity android:name=".TimeTableEditActivity" />
         <activity android:name=".AppearanceActivity" />
+        <activity android:name=".ScheduleAppearanceActivity" />
         <activity android:name=".FontSizeActivity" />
         <activity android:name=".AboutActivity" />
         <activity android:name=".ProfileActivity" />

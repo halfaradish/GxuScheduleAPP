@@ -75,6 +75,9 @@ class ScheduleFragment : Fragment() {
 
     private var allCourses: List<Course> = emptyList()
 
+    /** 当前已应用到课表的格子高度（dp），onResume 对比设置变化后刷新 */
+    private var appliedCellHeightDp = 0
+
     /** 当前是否处于总课表视图（周课表 ⇄ 总课表，由底部导航角标切换） */
     private var isOverview = false
 
@@ -133,6 +136,21 @@ class ScheduleFragment : Fragment() {
         super.onResume()
         // 不在 onResume 触发教务刷新，避免每次切tab都重建课表
         // 手动刷新按钮 + 首次启动已覆盖数据更新场景
+
+        // 但「课表」外观页改过的格子高度要在这里同步（脏检查，没变就不动）
+        syncCellHeightIfChanged()
+    }
+
+    /**
+     * 同步「我的 → 外观 → 课表」里的格子高度设置。
+     * 行高缓存在 ViewHolder 的时间轴里，必须让 bind 重跑才生效（见 WeekPagerAdapter）。
+     */
+    private fun syncCellHeightIfChanged() {
+        if (!::adapter.isInitialized) return
+        val heightDp = settingsManager.getCourseCellHeight()
+        if (heightDp == appliedCellHeightDp) return
+        appliedCellHeightDp = heightDp
+        adapter.setCellHeightDp(heightDp)
     }
 
     private fun initViews(view: View) {
@@ -199,7 +217,9 @@ class ScheduleFragment : Fragment() {
         val displayWk = getDisplayWeek()
         val totalWeeks = settingsManager.getTotalWeeks()
 
-        adapter = WeekPagerAdapter(totalWeeks)
+        // 格子高度取「我的 → 外观 → 课表」的设置（未设置过时回落 dimens 的 68dp）
+        appliedCellHeightDp = settingsManager.getCourseCellHeight()
+        adapter = WeekPagerAdapter(totalWeeks, appliedCellHeightDp)
         // 仅预加载相邻1页（3页总量），减少tab切换时的初始构建压力
         viewPager.offscreenPageLimit = 1
 
@@ -700,7 +720,8 @@ class ScheduleFragment : Fragment() {
                             withContext(Dispatchers.Main) {
                                 result.onSuccess { count ->
                                     // 更新 ViewPager 总页数
-                                    adapter = WeekPagerAdapter(settingsManager.getTotalWeeks())
+                                    appliedCellHeightDp = settingsManager.getCourseCellHeight()
+                                    adapter = WeekPagerAdapter(settingsManager.getTotalWeeks(), appliedCellHeightDp)
                                     viewPager.adapter = adapter
                                     adapter.updateData(CourseDataManager.getInstance(ctx).getAllCourses())
                                     refreshWeekSlider()

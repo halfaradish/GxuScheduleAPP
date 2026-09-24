@@ -2,10 +2,13 @@ package com.cherry.wakeupschedule.service
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.TypedValue
 import com.cherry.wakeupschedule.BuildConfig
+import com.cherry.wakeupschedule.R
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.util.Calendar
+import kotlin.math.roundToInt
 
 /**
  * 设置管理器
@@ -19,6 +22,9 @@ class SettingsManager(context: Context) {
 
     // SharedPreferences实例，用于存储键值对数据
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+
+    /** 读资源默认值用（dimens.xml）；用 applicationContext 避免持有 Activity */
+    private val appContext = context.applicationContext
 
     companion object {
         // SharedPreferences键名常量
@@ -45,6 +51,7 @@ class SettingsManager(context: Context) {
         private const val KEY_AUTO_SWITCH_MODE = "auto_switch_mode"    // 自动切换方式: system/custom
         private const val KEY_DARK_TIME = "theme_dark_time"            // 深色开始时间 HH:mm
         private const val KEY_LIGHT_TIME = "theme_light_time"          // 浅色开始时间 HH:mm
+        private const val KEY_COURSE_CELL_HEIGHT = "course_cell_height" // 课程格子高度（设计 dp）
         private const val DEFAULT_HIDE_HOLIDAY_COURSES = false              // 默认不隐藏
         private const val DEFAULT_THEME_MODE = "system"                  // 默认跟随系统
         private const val DEFAULT_AUTO_SWITCH_THEME = false              // 默认不自动切换
@@ -59,6 +66,10 @@ class SettingsManager(context: Context) {
         private const val DEFAULT_COURSE_CARD_ALPHA = 0.85f                    // 默认卡片透明度85%
         private const val DEFAULT_SHOW_NON_CURRENT_WEEK_COURSES = true         // 默认显示非本周课程
         private const val DEFAULT_NON_CURRENT_WEEK_ALPHA = 0.3f                // 非本周课程默认30%透明度
+
+        /** 课程格子高度可调范围（dp）：课表外观页的滑块、数值输入与读写校验共用 */
+        const val COURSE_CELL_HEIGHT_MIN_DP = 40
+        const val COURSE_CELL_HEIGHT_MAX_DP = 120
     }
 
     // ==================== 学期相关 ====================
@@ -212,6 +223,40 @@ class SettingsManager(context: Context) {
      */
     fun setNonCurrentWeekAlpha(alpha: Float) {
         sharedPreferences.edit().putFloat(KEY_NON_CURRENT_WEEK_ALPHA, alpha.coerceIn(0.1f, 0.8f)).apply()
+    }
+
+    // ==================== 课表外观相关 ====================
+
+    /**
+     * 课程格子默认高度（dp），取自 dimens.xml 的 course_cell_height（须保持 dp 单位）。
+     * 默认值留在资源里，保证「从未设置过」时与旧版本观感完全一致。
+     */
+    private val defaultCellHeightDp: Int by lazy {
+        val value = TypedValue()
+        appContext.resources.getValue(R.dimen.course_cell_height, value, true)
+        TypedValue.complexToFloat(value.data).roundToInt()
+    }
+
+    /**
+     * 获取课程格子高度（dp）。
+     * 取值恒在 [COURSE_CELL_HEIGHT_MIN_DP, COURSE_CELL_HEIGHT_MAX_DP] 内，
+     * 供周课表的时间轴行高与课程卡片高度共用（见 WeekPagerAdapter）。
+     */
+    fun getCourseCellHeight(): Int {
+        return sharedPreferences.getInt(KEY_COURSE_CELL_HEIGHT, defaultCellHeightDp)
+            .coerceIn(COURSE_CELL_HEIGHT_MIN_DP, COURSE_CELL_HEIGHT_MAX_DP)
+    }
+
+    /**
+     * 设置课程格子高度（dp），越界自动夹取到边界
+     */
+    fun setCourseCellHeight(heightDp: Int) {
+        sharedPreferences.edit()
+            .putInt(
+                KEY_COURSE_CELL_HEIGHT,
+                heightDp.coerceIn(COURSE_CELL_HEIGHT_MIN_DP, COURSE_CELL_HEIGHT_MAX_DP)
+            )
+            .apply()
     }
 
     /**
