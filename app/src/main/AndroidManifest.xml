@@ -35,7 +35,7 @@
             android:name=".MainActivity"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- 独立页面：入口均在「我的」页签与工具页，见 ProfileFragment / ToolsFragment -->
+        <!-- 独立页面：入口在「我的」页签、工具页与课表菜单，见 ProfileFragment / ToolsFragment / ScheduleFragment -->
         <activity android:name=".WebViewActivity" />
         <activity android:name=".TimeTableEditActivity" />
         <activity android:name=".AppearanceActivity" />

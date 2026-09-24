@@ -1,5 +1,6 @@
 package com.cherry.wakeupschedule.ui.screen.schedule
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -28,6 +29,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.cherry.wakeupschedule.App
 import com.cherry.wakeupschedule.R
+import com.cherry.wakeupschedule.ScheduleAppearanceActivity
 import com.cherry.wakeupschedule.model.Course
 import com.cherry.wakeupschedule.service.CourseDataManager
 import com.cherry.wakeupschedule.service.JwxtAccountManager
@@ -750,6 +752,16 @@ class ScheduleFragment : Fragment() {
         // 注册色块刷新回调：全局 loading 状态切换时（如刷新按钮触发）同步菜单色块
         menuSemesterRefresher = { refreshSemesterItems(animateEntrance = false) }
 
+        // ── 课表外观（跳转到独立的课表外观设置页） ──
+        val groupAppearance = sheetView.findViewById<View>(R.id.group_schedule_appearance)
+        // 入场前先隐藏，等弹窗展示后再淡入，避免 show() 瞬间闪一下
+        groupAppearance.alpha = 0f
+        sheetView.findViewById<View>(R.id.row_schedule_appearance).setOnClickListener {
+            // 故意不 dismiss：MainActivity 只是 stopped 不会销毁，返回时菜单仍在，
+            // 用户落回的就是出发时那个「课表菜单」（而不是「我的」页）
+            startActivity(Intent(ctx, ScheduleAppearanceActivity::class.java))
+        }
+
         // 弹窗展示后，学期色块按顺序波浪式入场
         dialog.setOnShowListener {
             llSemesterList.post {
@@ -763,6 +775,12 @@ class ScheduleFragment : Fragment() {
                         .setInterpolator(OvershootInterpolator(1.05f))
                         .start()
                 }
+                // 课表外观分组接在色块之后淡入（整行较宽，只做透明度不做缩放，免得像弹一下）
+                groupAppearance.animate()
+                    .alpha(1f)
+                    .setStartDelay(semesterItems.size * 55L)
+                    .setDuration(240)
+                    .start()
             }
         }
 
