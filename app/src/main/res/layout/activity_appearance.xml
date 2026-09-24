@@ -28,16 +28,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- 主题标题 -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="主题"
-                android:textSize="@dimen/text_title"
-                android:textStyle="bold"
-                android:textColor="?attr/colorOnSurface"
-                android:layout_marginBottom="12dp" />
-
             <!-- 浅色 / 深色 并排预览卡 -->
             <LinearLayout
                 android:layout_width="match_parent"

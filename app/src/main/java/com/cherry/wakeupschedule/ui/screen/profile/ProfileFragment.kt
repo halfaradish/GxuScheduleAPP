@@ -85,7 +85,7 @@ class ProfileFragment : Fragment() {
         }
 
 
-        // 外观：跳转到独立的外观设置页（浅色/深色主题 + 自动切换 + 卡片外观）
+        // 主题：跳转到独立的主题设置页（浅色/深色 + 自动切换）
         view.findViewById<View>(R.id.item_theme_mode).setOnClickListener {
             startActivity(Intent(requireContext(), AppearanceActivity::class.java))
         }
@@ -131,7 +131,7 @@ class ProfileFragment : Fragment() {
     private fun updateDisplay() {
         // 同步开关状态（不触发监听器提示）
 
-        // 主题模式展示（从外观页返回时刷新）
+        // 主题模式展示（从主题页返回时刷新）
         updateThemeModeDisplay(requireView())
 
         // 字体大小档位展示（从字体大小页返回时刷新）
