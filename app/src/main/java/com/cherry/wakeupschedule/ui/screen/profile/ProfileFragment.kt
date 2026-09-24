@@ -14,6 +14,7 @@ import com.cherry.wakeupschedule.BindJwxtActivity
 import com.cherry.wakeupschedule.FontSizeActivity
 import com.cherry.wakeupschedule.ProfileActivity
 import com.cherry.wakeupschedule.R
+import com.cherry.wakeupschedule.ScheduleAppearanceActivity
 import com.cherry.wakeupschedule.TimeTableEditActivity
 import com.cherry.wakeupschedule.service.JwxtAccountManager
 import com.cherry.wakeupschedule.service.JwxtAuthManager
@@ -85,9 +86,14 @@ class ProfileFragment : Fragment() {
         }
 
 
-        // 外观：跳转到独立的外观设置页（浅色/深色主题 + 自动切换 + 卡片外观）
+        // 主题：跳转到独立的主题设置页（浅色/深色 + 自动切换）
         view.findViewById<View>(R.id.item_theme_mode).setOnClickListener {
             startActivity(Intent(requireContext(), AppearanceActivity::class.java))
+        }
+
+        // 课表：跳转到独立的课表外观设置页（课程格子高度）
+        view.findViewById<View>(R.id.item_schedule_appearance).setOnClickListener {
+            startActivity(Intent(requireContext(), ScheduleAppearanceActivity::class.java))
         }
 
         // 字体大小：整体 UI 缩放档位（字体与界面尺寸一起变）
@@ -131,8 +137,11 @@ class ProfileFragment : Fragment() {
     private fun updateDisplay() {
         // 同步开关状态（不触发监听器提示）
 
-        // 主题模式展示（从外观页返回时刷新）
+        // 主题模式展示（从主题页返回时刷新）
         updateThemeModeDisplay(requireView())
+
+        // 课程格子高度展示（从课表页返回时刷新）
+        updateCellHeightDisplay(requireView())
 
         // 字体大小档位展示（从字体大小页返回时刷新）
         updateFontSizeDisplay(requireView())
@@ -213,5 +222,10 @@ class ProfileFragment : Fragment() {
     private fun updateFontSizeDisplay(view: View) {
         val tv = view.findViewById<TextView>(R.id.tv_font_size_value)
         tv?.text = UiScaleManager.labelOf(requireContext())
+    }
+
+    private fun updateCellHeightDisplay(view: View) {
+        val tv = view.findViewById<TextView>(R.id.tv_schedule_cell_height_value)
+        tv?.text = "格子高度 ${settingsManager.getCourseCellHeight()}dp"
     }
 }

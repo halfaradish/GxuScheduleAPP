@@ -24,19 +24,35 @@ import com.cherry.wakeupschedule.ui.widget.GridBackgroundView
 import com.cherry.wakeupschedule.ui.widget.OverlapBadgeView
 import com.cherry.wakeupschedule.ui.widget.VerticalScrollView
 import com.cherry.wakeupschedule.ui.theme.setTextSizeRes
+import kotlin.math.roundToInt
 
 /**
  * ViewPager2 适配器。
  * 完全模仿原始 app：RecyclerView.Adapter + 代码构建 View（零 XML inflation）+ 每页直接渲染。
  */
 class WeekPagerAdapter(
-    private val totalWeeks: Int
+    private val totalWeeks: Int,
+    initialCellHeightDp: Int
 ) : RecyclerView.Adapter<WeekPagerAdapter.WeekViewHolder>() {
+
+    /** 当前课程格子高度（设计 dp），随「我的 → 外观 → 课表」的设置变化 */
+    var cellHeightDp: Int = initialCellHeightDp
+        private set
 
     private var allCourses: List<Course> = emptyList()
 
     fun updateData(courses: List<Course>) {
         allCourses = courses
+        notifyDataSetChanged()
+    }
+
+    /**
+     * 更新格子高度并重排课表；值未变时直接返回，避免每次切 tab 白刷一遍。
+     * 时间轴行高缓存在 ViewHolder 里，所以必须让 bind 重跑（见 WeekViewHolder 的重建条件）。
+     */
+    fun setCellHeightDp(dp: Int) {
+        if (dp == cellHeightDp) return
+        cellHeightDp = dp
         notifyDataSetChanged()
     }
 
@@ -48,7 +64,7 @@ class WeekPagerAdapter(
 
     override fun onBindViewHolder(holder: WeekViewHolder, position: Int) {
         val week = position + 1
-        holder.bind(week, allCourses)
+        holder.bind(week, allCourses, cellHeightDp)
     }
 
     class WeekViewHolder(context: Context) : RecyclerView.ViewHolder(
@@ -63,6 +79,9 @@ class WeekPagerAdapter(
 
         private var axisBuilt = false
         private var builtNodes = 0
+
+        /** 上次构建时间轴所用的格子高度 px；高度变了必须重建，否则行高停在旧值 */
+        private var builtCellHeight = 0
         private val courseColors: IntArray get() = ThemeManager.getCourseColors()
 
         /** 当前显示的重叠课程弹窗，防止连点叠加 */
@@ -79,11 +98,12 @@ class WeekPagerAdapter(
             emptyView = contentArea.getChildAt(2) as LinearLayout
         }
 
-        fun bind(week: Int, allCourses: List<Course>) {
+        fun bind(week: Int, allCourses: List<Course>, cellHeightDp: Int) {
             val ctx = itemView.context
-            val cellHeight = ctx.resources.getDimensionPixelSize(R.dimen.course_cell_height)
             val maxNodes = TimeTableManager.getInstance(ctx).getMaxNodes()
             val density = ctx.resources.displayMetrics.density
+            // 按 dp × 当前密度换算：与「字体大小」档位（改写 densityDpi）保持一致，格子与文字同步缩放
+            val cellHeight = (cellHeightDp * density).roundToInt()
 
             // ── 网格背景（只配置一次） ──
             if (!axisBuilt || builtNodes != maxNodes) {
@@ -92,8 +112,8 @@ class WeekPagerAdapter(
                 gridBg.gridColor = android.graphics.Color.TRANSPARENT
             }
 
-            // ── 时间轴（只构建一次或节点数变化时重建） ──
-            if (!axisBuilt || builtNodes != maxNodes) {
+            // ── 时间轴（只构建一次，或节点数/格子高度变化时重建） ──
+            if (!axisBuilt || builtNodes != maxNodes || builtCellHeight != cellHeight) {
                 timeAxis.removeAllViews()
                 val slots = TimeTableManager.getInstance(ctx).getTimeSlots()
                 for (node in 1..maxNodes) {
@@ -103,6 +123,7 @@ class WeekPagerAdapter(
                 }
                 axisBuilt = true
                 builtNodes = maxNodes
+                builtCellHeight = cellHeight
             }
 
             // ── 筛选本周课程 ──

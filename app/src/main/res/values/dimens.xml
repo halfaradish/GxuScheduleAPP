@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- 课程格子「默认」高度：实际高度可在「我的 → 外观 → 课表」里调（40–120dp）。
+         这里只作为从未设置过时的默认值，改这里即改默认；用户调过之后以设置值为准。 -->
     <dimen name="course_cell_height">68dp</dimen>
     <dimen name="card_elevation_normal">1dp</dimen>
     <dimen name="card_elevation_highlight">12dp</dimen>

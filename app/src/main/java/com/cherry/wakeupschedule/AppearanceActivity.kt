@@ -27,7 +27,7 @@ import com.google.android.material.timepicker.TimeFormat
 import com.cherry.wakeupschedule.ui.theme.setTextSizeRes
 
 /**
- * 外观设置页
+ * 主题设置页
  *
  * - 顶部并排两张浅色/深色主题预览卡（程序化迷你课表预览），点击即应用主题
  * - 自动切换开关：开启后显示「自动切换方式」入口，底部弹窗选择 跟随系统/自定时间
@@ -61,7 +61,7 @@ class AppearanceActivity : BaseActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         settingsManager = SettingsManager(this)
-        setupPageHeader(binding.toolbar, "外观")
+        setupPageHeader(binding.toolbar, "主题")
         setupClickListeners()
         buildThemePreviewCards()
         updateUi()

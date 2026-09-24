@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 课程格子高度：精确输入框（由 StyledDialog 的 fl_custom 槽位承载） -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <EditText
+        android:id="@+id/et_cell_height"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_input_field"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="14dp"
+        android:hint="输入高度"
+        android:inputType="number"
+        android:maxLines="1"
+        android:imeOptions="actionDone"
+        android:textSize="@dimen/text_subtitle"
+        android:textColor="?attr/colorOnSurface"
+        android:textColorHint="?attr/colorOnSurfaceVariant" />
+
+    <TextView
+        android:id="@+id/tv_cell_height_range"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textSize="@dimen/text_caption"
+        android:textColor="?attr/colorOnSurfaceVariant" />
+
+</LinearLayout>
